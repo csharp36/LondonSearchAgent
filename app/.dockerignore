@@ -1,0 +1,5 @@
+.gradle
+build/classes
+build/generated
+build/tmp
+src
