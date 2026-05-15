@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  threads:
+    virtual:
+      enabled: true
+  thymeleaf:
+    cache: false
+
+app:
+  password: ${APP_PASSWORD:changeme}
+  aws:
+    region: ${AWS_REGION:eu-west-2}
+    dynamodb:
+      endpoint: ${DYNAMODB_ENDPOINT:}
+    tables:
+      properties: ${PROPERTIES_TABLE:Properties}
+      listings: ${LISTINGS_TABLE:Listings}
+      search-configs: ${SEARCH_CONFIGS_TABLE:SearchConfigs}
+      monitored-sites: ${MONITORED_SITES_TABLE:MonitoredSites}

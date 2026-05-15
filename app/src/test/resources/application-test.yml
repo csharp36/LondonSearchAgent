@@ -1,0 +1,7 @@
+app:
+  password: testpassword
+  aws:
+    region: eu-west-2
+    dynamodb:
+      endpoint: http://localhost:8000
+  seed-data: false
