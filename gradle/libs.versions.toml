@@ -1,0 +1,21 @@
+[versions]
+spring-boot = "3.5.14"
+spring-dependency-management = "1.1.7"
+aws-sdk = "2.44.5"
+aws-cdk = "2.248.0"
+constructs = "10.4.2"
+htmx-spring = "4.0.1"
+
+[libraries]
+aws-dynamodb-enhanced = { module = "software.amazon.awssdk:dynamodb-enhanced" }
+aws-url-connection-client = { module = "software.amazon.awssdk:url-connection-client" }
+aws-s3 = { module = "software.amazon.awssdk:s3" }
+aws-ses = { module = "software.amazon.awssdk:ses" }
+aws-secretsmanager = { module = "software.amazon.awssdk:secretsmanager" }
+aws-cdk-lib = { module = "software.amazon.awscdk:aws-cdk-lib", version.ref = "aws-cdk" }
+constructs = { module = "software.constructs:constructs", version.ref = "constructs" }
+htmx-spring-boot = { module = "io.github.wimdeblauwe:htmx-spring-boot-thymeleaf", version.ref = "htmx-spring" }
+
+[plugins]
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
