@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="filter-pills" class="flex flex-wrap items-center gap-2">
+    <!-- Area pills -->
+    <a th:href="@{/(filter=${selectedFilter})}"
+       th:classappend="${#strings.isEmpty(selectedArea)} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
+       class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors">
+        All <span class="ml-1 opacity-70" th:text="'(' + ${totalCount} + ')'"></span>
+    </a>
+
+    <a th:each="areaName : ${areas}"
+       th:href="@{/(area=${areaName}, filter=${selectedFilter})}"
+       th:classappend="${selectedArea == areaName and !#strings.isEmpty(selectedArea)} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
+       class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+       th:text="${areaName == 'South Kensington' ? 'S. Kensington' : areaName} + ' (' + ${areaCounts[areaName]} + ')'">
+    </a>
+
+    <!-- Spacer -->
+    <div class="flex-1"></div>
+
+    <!-- Status pills -->
+    <a th:href="@{/(area=${selectedArea}, filter='new')}"
+       th:classappend="${selectedFilter == 'new'} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
+       class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors">
+        New Only <span class="ml-1 opacity-70" th:text="'(' + ${newCount} + ')'"></span>
+    </a>
+
+    <a th:href="@{/(area=${selectedArea}, filter='saved')}"
+       th:classappend="${selectedFilter == 'saved'} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
+       class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors">
+        Saved <span class="ml-1 opacity-70" th:text="'(' + ${savedCount} + ')'"></span>
+    </a>
+</div>
+</body>
+</html>

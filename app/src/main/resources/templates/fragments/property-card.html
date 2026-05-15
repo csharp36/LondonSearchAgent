@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<a th:fragment="property-card(property, listingCount)"
+   th:href="@{/property/{id}(id=${property.id})}"
+   class="block bg-slate-800 rounded-lg overflow-hidden hover:ring-1 hover:ring-blue-500 transition-all group">
+
+    <!-- Photo placeholder with gradient -->
+    <div class="relative h-48 bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center">
+        <svg class="w-12 h-12 text-slate-500 group-hover:text-slate-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 21V12h6v9"/>
+        </svg>
+
+        <!-- NEW badge (top-left) -->
+        <span th:if="${property.status == 'new'}"
+              class="absolute top-2 left-2 bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wide">
+            New
+        </span>
+
+        <!-- SAVED badge (top-left) -->
+        <span th:if="${property.status == 'saved'}"
+              class="absolute top-2 left-2 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wide">
+            Saved
+        </span>
+
+        <!-- Site count badge (top-right) -->
+        <span th:if="${listingCount > 1}"
+              class="absolute top-2 right-2 bg-slate-900/80 text-slate-300 text-xs px-2 py-0.5 rounded"
+              th:text="${listingCount} + ' sites'">
+        </span>
+    </div>
+
+    <!-- Card body -->
+    <div class="p-4">
+        <!-- Address -->
+        <h3 class="text-slate-100 font-semibold text-sm leading-tight mb-0.5 group-hover:text-blue-400 transition-colors"
+            th:text="${property.address}">Address</h3>
+
+        <!-- Area -->
+        <p class="text-slate-400 text-xs mb-3" th:text="${property.area}">Area</p>
+
+        <!-- Stats row -->
+        <div class="flex items-center gap-3 text-xs text-slate-400 mb-3">
+            <span th:if="${property.bedrooms != null}">
+                <span class="text-slate-200 font-medium" th:text="${property.bedrooms}">0</span> bed
+            </span>
+            <span th:if="${property.bathrooms != null}">
+                <span class="text-slate-200 font-medium" th:text="${property.bathrooms}">0</span> bath
+            </span>
+            <span th:if="${property.sqft != null}">
+                <span class="text-slate-200 font-medium" th:text="${#numbers.formatInteger(property.sqft, 1, 'COMMA')}">0</span> sqft
+            </span>
+        </div>
+
+        <!-- Price and match score -->
+        <div class="flex items-center justify-between mb-3">
+            <span class="text-blue-400 font-semibold text-sm"
+                  th:text="'£' + ${#numbers.formatInteger(property.price, 1, 'COMMA')} + '/mo'">£0/mo</span>
+
+            <span th:if="${property.matchScore != null}"
+                  th:classappend="${property.matchScore >= 80} ? 'text-green-400' : 'text-amber-400'"
+                  class="text-xs font-semibold"
+                  th:text="${property.matchScore} + '% match'">0% match</span>
+        </div>
+
+        <!-- AI Summary snippet -->
+        <p th:if="${property.aiSummary != null}"
+           class="text-slate-400 text-xs italic leading-relaxed line-clamp-2"
+           th:text="${property.aiSummary}">AI summary...</p>
+    </div>
+</a>
+</body>
+</html>

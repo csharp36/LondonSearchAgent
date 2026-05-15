@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: html(~{:: content})}">
+<body>
+<div th:fragment="content">
+
+    <!-- Header row -->
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-xl font-bold text-slate-100">
+            <span th:text="${properties.size()}">0</span>
+            <span th:text="${properties.size() == 1 ? 'property' : 'properties'}">properties</span>
+        </h1>
+
+        <!-- Sort toggle -->
+        <div class="flex items-center gap-1 bg-slate-800 rounded-lg p-1">
+            <a th:href="@{/(area=${selectedArea}, filter=${selectedFilter}, sort='date')}"
+               th:classappend="${selectedSort == 'date' or selectedSort == null} ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'"
+               class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
+                Newest
+            </a>
+            <a th:href="@{/(area=${selectedArea}, filter=${selectedFilter}, sort='score')}"
+               th:classappend="${selectedSort == 'score'} ? 'bg-slate-700 text-slate-100' : 'text-slate-400 hover:text-slate-200'"
+               class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
+                Best Match
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter pills -->
+    <div class="mb-6"
+         th:insert="~{fragments/filter-pills :: filter-pills}">
+    </div>
+
+    <!-- Property grid -->
+    <div th:if="${!properties.isEmpty()}"
+         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div th:each="property : ${properties}">
+            <div th:insert="~{fragments/property-card :: property-card(${property}, ${listingCounts[property.id]})}"></div>
+        </div>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${properties.isEmpty()}"
+         class="flex flex-col items-center justify-center py-24 text-center">
+        <svg class="w-16 h-16 text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0016.803 15.803z"/>
+        </svg>
+        <h3 class="text-slate-400 font-semibold text-lg mb-1">No properties found</h3>
+        <p class="text-slate-500 text-sm">Try adjusting your filters to see more results.</p>
+        <a th:href="@{/}" class="mt-4 text-blue-400 hover:text-blue-300 text-sm transition-colors">Clear all filters</a>
+    </div>
+
+</div>
+</body>
+</html>
