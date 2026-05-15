@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:hx="http://www.w3.org/1999/xhtml"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="html(content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} ?: 'LondonSearchAgent'">LondonSearchAgent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <script>
+        document.addEventListener('htmx:configRequest', function(event) {
+            var csrfToken = document.querySelector('meta[name="_csrf"]').content;
+            var csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+            event.detail.headers[csrfHeader] = csrfToken;
+        });
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-slate-800 border-b border-slate-700 px-6 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a th:href="@{/}" class="text-lg font-bold text-slate-100 hover:text-blue-400 transition-colors">
+                LondonSearchAgent
+            </a>
+            <div class="flex items-center gap-4">
+                <a th:href="@{/}" class="text-sm text-slate-300 hover:text-white transition-colors">Feed</a>
+                <a th:href="@{/config/search}" class="text-sm text-slate-300 hover:text-white transition-colors">Settings</a>
+                <form th:action="@{/logout}" method="post" class="inline">
+                    <button type="submit" class="text-sm text-slate-400 hover:text-red-400 transition-colors">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="max-w-7xl mx-auto px-6 py-6" th:insert="~{:: content}">
+    </main>
+</body>
+</html>
