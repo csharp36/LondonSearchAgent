@@ -154,6 +154,13 @@ public class AgentPipelineService {
         return new SiteResult(false, pipelineResult);
     }
 
+    /** Rightmove REGION codes for target areas. */
+    private static final java.util.Map<String, String> RIGHTMOVE_CODES = java.util.Map.of(
+            "mayfair", "87523",
+            "marylebone", "87522",
+            "south-kensington", "85252"
+    );
+
     /** Expands URL templates with search config values. If template contains {area}, generates one URL per area. */
     private List<String> expandUrls(String template) {
         if (!template.contains("{")) return List.of(template);
@@ -169,6 +176,19 @@ public class AgentPipelineService {
                 .replace("{maxBeds}", config.getMaxBeds() != null ? config.getMaxBeds().toString() : "5")
                 .replace("{minPrice}", config.getMinPrice() != null ? config.getMinPrice().toString() : "0")
                 .replace("{maxPrice}", config.getMaxPrice() != null ? config.getMaxPrice().toString() : "100000");
+
+        // Handle Rightmove's special {rightmoveCode} placeholder
+        if (base.contains("{rightmoveCode}")) {
+            List<String> areas = config.getAreas();
+            if (areas == null || areas.isEmpty()) return List.of();
+            return areas.stream()
+                    .map(area -> {
+                        String slug = area.toLowerCase().replace(" ", "-");
+                        String code = RIGHTMOVE_CODES.getOrDefault(slug, "87490"); // fallback to London
+                        return base.replace("{rightmoveCode}", code);
+                    })
+                    .toList();
+        }
 
         if (!base.contains("{area}")) return List.of(base);
 
