@@ -45,16 +45,16 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Skip seeding if data already exists (prevents duplicates on restart)
-        if (!propertyRepository.findAll().isEmpty()) {
-            log.info("Seed data already exists, skipping.");
-            return;
+        // Always seed configs and sites (idempotent by ID)
+        // Skip fake properties — real data comes from the pipeline
+        if (searchConfigRepository.findAll().isEmpty()) {
+            log.info("Seeding search configs and monitored sites...");
+            seedSearchConfigs();
+            seedMonitoredSites();
+            log.info("Search configs and monitored sites seeded.");
+        } else {
+            log.info("Configs already exist, skipping seed.");
         }
-        log.info("Seeding development data...");
-        seedProperties();
-        seedSearchConfigs();
-        seedMonitoredSites();
-        log.info("Development seed data loaded successfully.");
     }
 
     private void seedProperties() {
