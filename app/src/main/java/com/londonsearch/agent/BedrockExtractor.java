@@ -1,6 +1,7 @@
 package com.londonsearch.agent;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,9 @@ import java.util.List;
 public class BedrockExtractor implements PropertyExtractor {
 
     private static final Logger log = LoggerFactory.getLogger(BedrockExtractor.class);
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, false)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     private static final String EXTRACTION_PROMPT = """
             You are a property listing data extractor. Extract ALL rental property listings from the following HTML content.
@@ -82,7 +85,7 @@ public class BedrockExtractor implements PropertyExtractor {
                             .content(ContentBlock.fromText(prompt))
                             .build())
                     .inferenceConfig(InferenceConfiguration.builder()
-                            .maxTokens(4096)
+                            .maxTokens(5000)
                             .temperature(0.0f)
                             .build())
                     .build());
@@ -100,6 +103,13 @@ public class BedrockExtractor implements PropertyExtractor {
                 responseText = responseText.substring(0, responseText.length() - 3);
             }
             responseText = responseText.strip();
+
+            // Extract the JSON array even if there's surrounding garbage text
+            int arrStart = responseText.indexOf('[');
+            int arrEnd = responseText.lastIndexOf(']');
+            if (arrStart >= 0 && arrEnd > arrStart) {
+                responseText = responseText.substring(arrStart, arrEnd + 1);
+            }
 
             List<ExtractedProperty> results = objectMapper.readValue(
                     responseText, new TypeReference<>() {});
