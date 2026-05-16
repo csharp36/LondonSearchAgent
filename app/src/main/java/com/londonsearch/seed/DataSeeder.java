@@ -306,81 +306,81 @@ public class DataSeeder implements CommandLineRunner {
     private void seedMonitoredSites() {
         // Aggregators
         saveMonitoredSite("site-rightmove", "Rightmove", "https://www.rightmove.co.uk",
-                "https://www.rightmove.co.uk/property-to-rent/find.html?locationIdentifier={area}&maxBedrooms={maxBeds}&minBedrooms={minBeds}&maxPrice={maxPrice}&minPrice={minPrice}",
-                "http", true, "aggregator");
+                "https://www.rightmove.co.uk/property-to-rent/find.html?locationIdentifier=REGION%5E87490&minBedrooms=2&maxBedrooms=3&minPrice=5000&maxPrice=9000&propertyTypes=flat&channel=RENT",
+                "js-rendered", true, "aggregator");
 
         saveMonitoredSite("site-onthemarket", "OnTheMarket", "https://www.onthemarket.com",
-                "https://www.onthemarket.com/to-rent/property/{area}/?max-bedrooms={maxBeds}&min-bedrooms={minBeds}&max-price={maxPrice}&min-price={minPrice}",
+                "https://www.onthemarket.com/to-rent/2-bed-property/london/?min-price=5000&max-price=9000",
                 "http", true, "aggregator");
 
         saveMonitoredSite("site-zoopla", "Zoopla", "https://www.zoopla.co.uk",
-                "https://www.zoopla.co.uk/to-rent/property/{area}/?beds_max={maxBeds}&beds_min={minBeds}&price_frequency=per_month&price_max={maxPrice}&price_min={minPrice}",
-                "http", true, "aggregator");
+                "https://www.zoopla.co.uk/to-rent/property/2-bedrooms/london/?price_min=5000&price_max=9000",
+                "js-rendered", true, "aggregator");
 
         // Tier 1
-        saveMonitoredSite("site-knight-frank", "Knight Frank", "https://www.knightfrank.com",
-                "https://www.knightfrank.com/residential-lettings/london/{area}?bedrooms={minBeds}-{maxBeds}&priceFrom={minPrice}&priceTo={maxPrice}",
+        saveMonitoredSite("site-knight-frank", "Knight Frank", "https://www.knightfrank.co.uk",
+                "https://www.knightfrank.co.uk/properties/residential/to-let/uk-greater-london-london/all-types/2-3-beds;pricemax=9000;pricemin=5000;availability=available",
                 "authenticated", true, "tier1");
 
         saveMonitoredSite("site-savills", "Savills", "https://www.savills.co.uk",
-                "https://www.savills.co.uk/residential-lettings/{area}.aspx?SearchType=Rent&MinBedrooms={minBeds}&MaxBedrooms={maxBeds}&MinRent={minPrice}&MaxRent={maxPrice}",
+                "https://search.savills.com/list?SearchList=Id_51730+Category_TownVillageCity&Tenure=GRS_T_R&SortOrder=SO_PCDD&MinPrice=5000&MaxPrice=9000&MinBedrooms=2&MaxBedrooms=3&Category=GRS_CAT_RES&Currency=GBP&Period=Month",
                 "js-rendered", true, "tier1");
 
         saveMonitoredSite("site-foxtons", "Foxtons", "https://www.foxtons.co.uk",
-                "https://www.foxtons.co.uk/properties/let/{area}/?min_beds={minBeds}&max_beds={maxBeds}&min_price={minPrice}&max_price={maxPrice}",
+                "https://www.foxtons.co.uk/properties-to-rent/london/2-bedrooms",
                 "js-rendered", true, "tier1");
 
-        saveMonitoredSite("site-chestertons", "Chestertons", "https://www.chestertons.com",
-                "https://www.chestertons.com/en-gb/residential-lettings/{area}?minBedrooms={minBeds}&maxBedrooms={maxBeds}&minPrice={minPrice}&maxPrice={maxPrice}",
+        saveMonitoredSite("site-chestertons", "Chestertons", "https://www.chestertons.co.uk",
+                "https://www.chestertons.co.uk/london/mayfair/lettings",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-strutt-parker", "Strutt & Parker", "https://www.struttandparker.com",
-                "https://www.struttandparker.com/residential-lettings?location={area}&minBeds={minBeds}&maxBeds={maxBeds}&minRent={minPrice}&maxRent={maxPrice}",
+                "https://www.struttandparker.com/properties/residential/to-let/london",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-jll", "JLL Residential", "https://www.jll.co.uk",
-                "https://www.jll.co.uk/en/residential/rent/{area}?minBedrooms={minBeds}&maxBedrooms={maxBeds}&minRent={minPrice}&maxRent={maxPrice}",
-                "js-rendered", true, "tier1");
+                "https://residential.jll.co.uk/properties-to-rent/london",
+                "http", true, "tier1");
 
         saveMonitoredSite("site-marsh-parsons", "Marsh & Parsons", "https://www.marshandparsons.co.uk",
-                "https://www.marshandparsons.co.uk/property/to-let/{area}/?min_bedrooms={minBeds}&max_bedrooms={maxBeds}&min_price={minPrice}&max_price={maxPrice}",
+                "https://www.marshandparsons.co.uk/properties-to-rent/london/mayfair/",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-hamptons", "Hamptons", "https://www.hamptons.co.uk",
-                "https://www.hamptons.co.uk/search/let/{area}?minBeds={minBeds}&maxBeds={maxBeds}&minPrice={minPrice}&maxPrice={maxPrice}",
+                "https://www.hamptons.co.uk/properties/to-let/london",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-winkworth", "Winkworth", "https://www.winkworth.co.uk",
-                "https://www.winkworth.co.uk/properties/to-let/{area}?min_bedrooms={minBeds}&max_bedrooms={maxBeds}&min_rent={minPrice}&max_rent={maxPrice}",
+                "https://www.winkworth.co.uk/properties/to-let/london",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-dexters", "Dexters", "https://www.dexters.co.uk",
-                "https://www.dexters.co.uk/property-lettings/flats-to-rent-in-{area}?min_bedrooms={minBeds}&max_bedrooms={maxBeds}&min_price={minPrice}&max_price={maxPrice}",
-                "js-rendered", true, "tier1");
+                "https://www.dexters.co.uk/property-lettings/properties-to-rent-in-mayfair",
+                "http", true, "tier1");
 
-        saveMonitoredSite("site-benham-reeves", "Benham & Reeves", "https://www.benhamandreeves.com",
-                "https://www.benhamandreeves.com/to-let/{area}/?minBeds={minBeds}&maxBeds={maxBeds}&minRent={minPrice}&maxRent={maxPrice}",
+        saveMonitoredSite("site-benham-reeves", "Benham & Reeves", "https://www.benhams.com",
+                "https://www.benhams.com/properties-to-rent/london",
                 "http", true, "tier1");
 
         // Tier 2
         saveMonitoredSite("site-wetherell", "Wetherell", "https://www.wetherell.co.uk",
-                "https://www.wetherell.co.uk/properties/to-rent/{area}/?min_beds={minBeds}&max_beds={maxBeds}&min_price={minPrice}&max_price={maxPrice}",
+                "https://www.wetherell.co.uk/properties/lettings",
                 "http", true, "tier2");
 
-        saveMonitoredSite("site-knightsbridge-prime", "Knightsbridge Prime Property", "https://www.knightsbridgeprimeproperty.com",
-                "https://www.knightsbridgeprimeproperty.com/properties/to-let?area={area}&minBeds={minBeds}&maxBeds={maxBeds}&minPrice={minPrice}&maxPrice={maxPrice}",
+        saveMonitoredSite("site-knightsbridge-prime", "Knightsbridge Prime Property", "https://knightsbridgeprimeproperty.com",
+                "https://knightsbridgeprimeproperty.com/lettings/",
                 "http", true, "tier2");
 
-        saveMonitoredSite("site-quintessentially", "Quintessentially Estates", "https://www.quintessentiallyestates.com",
-                "https://www.quintessentiallyestates.com/search/?location={area}&min_beds={minBeds}&max_beds={maxBeds}&min_price={minPrice}&max_price={maxPrice}&type=rent",
+        saveMonitoredSite("site-quintessentially", "Quintessentially Estates", "https://quintessentiallyestates.com",
+                "https://quintessentiallyestates.com/lettings-agents-london/",
                 "http", true, "tier2");
 
         saveMonitoredSite("site-hudsons", "Hudsons Property", "https://www.hudsonsproperty.com",
-                "https://www.hudsonsproperty.com/to-rent/{area}?minBeds={minBeds}&maxBeds={maxBeds}&minRent={minPrice}&maxRent={maxPrice}",
+                "https://www.hudsonsproperty.com/property-lettings/",
                 "http", true, "tier2");
 
         saveMonitoredSite("site-carter-jonas", "Carter Jonas", "https://www.carterjonas.co.uk",
-                "https://www.carterjonas.co.uk/residential/to-let/{area}?minBedrooms={minBeds}&maxBedrooms={maxBeds}&minRent={minPrice}&maxRent={maxPrice}",
+                "https://www.carterjonas.co.uk/properties/residential/to-let/london",
                 "http", true, "tier2");
 
         log.info("Seeded 19 monitored sites");
