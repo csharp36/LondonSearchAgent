@@ -30,7 +30,7 @@ public class FeedController {
     @GetMapping("/")
     public String feed(@RequestParam(required = false) String area,
                        @RequestParam(required = false, defaultValue = "all") String filter,
-                       @RequestParam(required = false, defaultValue = "date") String sort,
+                       @RequestParam(required = false, defaultValue = "score") String sort,
                        Model model) {
 
         List<Property> properties;

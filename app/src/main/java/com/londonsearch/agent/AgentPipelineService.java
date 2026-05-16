@@ -143,21 +143,41 @@ public class AgentPipelineService {
         int newCount = 0, updatedCount = 0;
         List<String> newPropertyIds = new ArrayList<>();
 
-        // Get max price from active search config for budget filtering
-        Integer maxPrice = searchConfigRepo.findAll().stream()
+        // Get search criteria from active config for filtering
+        SearchConfig activeConfig = searchConfigRepo.findAll().stream()
                 .filter(c -> Boolean.TRUE.equals(c.getEnabled()))
-                .map(SearchConfig::getMaxPrice)
                 .findFirst()
                 .orElse(null);
+
+        Integer maxPrice = activeConfig != null ? activeConfig.getMaxPrice() : null;
+        Integer minPrice = activeConfig != null ? activeConfig.getMinPrice() : null;
+        Integer minBeds = activeConfig != null ? activeConfig.getMinBeds() : null;
 
         for (ExtractedProperty ep : extracted) {
             String normalizedAddr = normalizer.normalizeAddress(ep.address());
             if (normalizedAddr == null || normalizedAddr.isBlank()) continue;
 
-            // Filter out properties above budget
+            // Filter out properties with no usable data
             Integer pricePerMonth = normalizer.parsePricePerMonth(ep.price());
-            if (maxPrice != null && pricePerMonth != null && pricePerMonth > maxPrice) {
-                log.debug("Skipping {} — £{}/mo exceeds budget of £{}/mo", ep.address(), pricePerMonth, maxPrice);
+            if (pricePerMonth == null) {
+                log.debug("Skipping {} — no parseable price", ep.address());
+                continue;
+            }
+
+            // Filter out properties outside budget
+            if (maxPrice != null && pricePerMonth > maxPrice) {
+                log.debug("Skipping {} — £{}/mo exceeds max budget of £{}/mo", ep.address(), pricePerMonth, maxPrice);
+                continue;
+            }
+            if (minPrice != null && pricePerMonth < minPrice) {
+                log.debug("Skipping {} — £{}/mo below min budget of £{}/mo", ep.address(), pricePerMonth, minPrice);
+                continue;
+            }
+
+            // Filter out properties below minimum bedrooms
+            Integer beds = normalizer.parseInteger(ep.bedrooms());
+            if (minBeds != null && beds != null && beds < minBeds) {
+                log.debug("Skipping {} — {} beds below minimum of {}", ep.address(), beds, minBeds);
                 continue;
             }
 
