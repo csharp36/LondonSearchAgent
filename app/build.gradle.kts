@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.aws.s3)
     implementation(libs.jsoup)
     implementation(libs.aws.bedrockruntime)
+    implementation(libs.aws.ses)
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 

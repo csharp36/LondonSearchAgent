@@ -22,6 +22,7 @@ app:
       alerts: ${ALERTS_TABLE:Alerts}
   alert:
     email-to: ${ALERT_EMAIL:csharp36@gmail.com}
+    email-from: ${ALERT_EMAIL_FROM:noreply@londonsearchagent.com}
     portal-base-url: ${PORTAL_BASE_URL:http://localhost:8080}
   agent:
     extractor: ${EXTRACTOR_TYPE:mock}
