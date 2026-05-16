@@ -25,6 +25,9 @@ app:
     portal-base-url: ${PORTAL_BASE_URL:http://localhost:8080}
   agent:
     extractor: ${EXTRACTOR_TYPE:mock}
+    cost-guard:
+      enabled: ${COST_GUARD_ENABLED:false}
+      monthly-budget: ${COST_GUARD_BUDGET:50}
     bedrock:
       region: ${BEDROCK_REGION:us-east-1}
       model-id: ${BEDROCK_MODEL_ID:amazon.nova-micro-v1:0}
