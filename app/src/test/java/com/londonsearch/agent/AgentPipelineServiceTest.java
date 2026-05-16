@@ -25,9 +25,14 @@ class AgentPipelineServiceTest {
     @BeforeEach
     void cleanupTestAddresses() {
         // Remove any previously saved test fixtures so tests are idempotent across runs
-        String fixedAddr = "99 test street, london w1k 1aa"; // normalised form
         propertyRepository.findAll().stream()
-                .filter(p -> fixedAddr.equals(p.getNormalizedAddress()))
+                .filter(p -> {
+                    String addr = p.getNormalizedAddress();
+                    return addr != null && (
+                            addr.equals("99 test street, london w1k 1aa") ||
+                            addr.startsWith("100 dedup street")
+                    );
+                })
                 .forEach(p -> propertyRepository.delete(p.getId()));
     }
 

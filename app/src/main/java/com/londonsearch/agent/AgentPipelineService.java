@@ -3,9 +3,11 @@ package com.londonsearch.agent;
 import com.londonsearch.model.Listing;
 import com.londonsearch.model.MonitoredSite;
 import com.londonsearch.model.Property;
+import com.londonsearch.model.SearchConfig;
 import com.londonsearch.repository.ListingRepository;
 import com.londonsearch.repository.MonitoredSiteRepository;
 import com.londonsearch.repository.PropertyRepository;
+import com.londonsearch.repository.SearchConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,19 +29,31 @@ public class AgentPipelineService {
     private final PropertyRepository propertyRepo;
     private final ListingRepository listingRepo;
     private final MonitoredSiteRepository siteRepo;
+    private final DeduplicationService deduplicationService;
+    private final StructuredScorer structuredScorer;
+    private final PropertyIntelligence intelligence;
+    private final SearchConfigRepository searchConfigRepo;
 
     public AgentPipelineService(SiteFetcher siteFetcher,
                                  PropertyExtractor extractor,
                                  PropertyNormalizer normalizer,
                                  PropertyRepository propertyRepo,
                                  ListingRepository listingRepo,
-                                 MonitoredSiteRepository siteRepo) {
+                                 MonitoredSiteRepository siteRepo,
+                                 DeduplicationService deduplicationService,
+                                 StructuredScorer structuredScorer,
+                                 PropertyIntelligence intelligence,
+                                 SearchConfigRepository searchConfigRepo) {
         this.siteFetcher = siteFetcher;
         this.extractor = extractor;
         this.normalizer = normalizer;
         this.propertyRepo = propertyRepo;
         this.listingRepo = listingRepo;
         this.siteRepo = siteRepo;
+        this.deduplicationService = deduplicationService;
+        this.structuredScorer = structuredScorer;
+        this.intelligence = intelligence;
+        this.searchConfigRepo = searchConfigRepo;
     }
 
     public RunResult runFullPipeline() {
@@ -107,15 +121,21 @@ public class AgentPipelineService {
             String normalizedAddr = normalizer.normalizeAddress(ep.address());
             if (normalizedAddr == null || normalizedAddr.isBlank()) continue;
 
-            Optional<Property> existing = findByNormalizedAddress(normalizedAddr);
+            Optional<DeduplicationService.DedupMatch> match = deduplicationService.findMatch(normalizedAddr);
 
-            if (existing.isPresent()) {
-                Property prop = existing.get();
+            if (match.isPresent()) {
+                Property prop = match.get().property();
+                double confidence = match.get().confidence();
+                if (deduplicationService.isMediumConfidenceMatch(confidence)) {
+                    log.info("Medium confidence match ({}) for: {} ↔ {}",
+                            String.format("%.2f", confidence), normalizedAddr, prop.getNormalizedAddress());
+                }
                 saveListing(prop.getId(), ep, siteName, siteBaseUrl);
                 updatedCount++;
             } else {
                 Property prop = createProperty(ep, normalizedAddr);
                 propertyRepo.save(prop);
+                scoreAndAssess(prop);
                 saveListing(prop.getId(), ep, siteName, siteBaseUrl);
                 newCount++;
             }
@@ -172,10 +192,21 @@ public class AgentPipelineService {
         listingRepo.save(listing);
     }
 
-    private Optional<Property> findByNormalizedAddress(String normalizedAddr) {
-        return propertyRepo.findAll().stream()
-                .filter(p -> normalizedAddr.equals(p.getNormalizedAddress()))
-                .findFirst();
+    private void scoreAndAssess(Property property) {
+        List<SearchConfig> configs = searchConfigRepo.findAll().stream()
+                .filter(c -> Boolean.TRUE.equals(c.getEnabled()))
+                .toList();
+        if (configs.isEmpty()) return;
+
+        SearchConfig primaryConfig = configs.get(0);
+        int structuredScore = structuredScorer.score(property, primaryConfig);
+        PropertyIntelligence.Assessment assessment = intelligence.assess(property, primaryConfig);
+        int combinedScore = (int) Math.round(structuredScore * 0.6 + assessment.aiScore() * 0.4);
+
+        property.setMatchScore(combinedScore);
+        property.setAiSummary(assessment.aiSummary());
+        property.setLastUpdatedAt(Instant.now());
+        propertyRepo.save(property);
     }
 
     private void updateSiteHash(MonitoredSite site, String hash) {

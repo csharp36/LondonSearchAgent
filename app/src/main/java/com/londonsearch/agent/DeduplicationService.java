@@ -2,6 +2,7 @@ package com.londonsearch.agent;
 
 import com.londonsearch.model.Property;
 import com.londonsearch.repository.PropertyRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -22,6 +23,7 @@ public class DeduplicationService {
         this.propertyRepository = null;
     }
 
+    @Autowired
     public DeduplicationService(PropertyRepository propertyRepository) {
         this.propertyRepository = propertyRepository;
     }
