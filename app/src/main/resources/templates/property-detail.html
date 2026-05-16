@@ -120,16 +120,21 @@
         <div class="col-span-3 space-y-5">
 
             <!-- AI Summary with purple accent border -->
-            <div th:if="${property.aiSummary != null}"
-                 class="border-l-4 border-purple-500 pl-4 bg-purple-950/30 rounded-r-lg py-3 pr-3">
+            <div class="border-l-4 border-purple-500 pl-4 bg-purple-950/30 rounded-r-lg py-3 pr-3">
                 <h2 class="text-sm font-semibold text-purple-300 uppercase tracking-wide mb-2">AI Assessment</h2>
-                <p class="text-slate-300 text-sm leading-relaxed italic" th:text="${property.aiSummary}">AI summary...</p>
+                <p th:if="${property.aiSummary != null}"
+                   class="text-slate-300 text-sm leading-relaxed italic" th:text="${property.aiSummary}">AI summary...</p>
+                <p th:if="${property.aiSummary == null}"
+                   class="text-slate-500 text-sm leading-relaxed italic">Assessment pending — will be generated on the next pipeline run.</p>
             </div>
 
             <!-- Description -->
-            <div th:if="${property.description != null}">
+            <div>
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-2">Description</h2>
-                <p class="text-slate-400 text-sm leading-relaxed" th:text="${property.description}">Description...</p>
+                <p th:if="${property.description != null}"
+                   class="text-slate-400 text-sm leading-relaxed" th:text="${property.description}">Description...</p>
+                <p th:if="${property.description == null}"
+                   class="text-slate-500 text-sm leading-relaxed">No description provided by the listing agent.</p>
             </div>
         </div>
 

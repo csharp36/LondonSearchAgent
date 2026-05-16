@@ -28,14 +28,14 @@
     <!-- Spacer -->
     <div class="flex-1"></div>
 
-    <!-- Status pills -->
-    <a th:href="@{/(area=${selectedArea}, filter='new')}"
+    <!-- Status pills (click active pill again to toggle back to All) -->
+    <a th:href="${selectedFilter == 'new'} ? @{/(area=${selectedArea})} : @{/(area=${selectedArea}, filter='new')}"
        th:classappend="${selectedFilter == 'new'} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
        class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors">
         New Only <span class="ml-1 opacity-70" th:text="'(' + ${newCount} + ')'"></span>
     </a>
 
-    <a th:href="@{/(area=${selectedArea}, filter='saved')}"
+    <a th:href="${selectedFilter == 'saved'} ? @{/(area=${selectedArea})} : @{/(area=${selectedArea}, filter='saved')}"
        th:classappend="${selectedFilter == 'saved'} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
        class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors">
         Saved <span class="ml-1 opacity-70" th:text="'(' + ${savedCount} + ')'"></span>

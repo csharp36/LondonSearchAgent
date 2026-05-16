@@ -55,7 +55,8 @@ public class ConfigController {
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false) Integer minBaths,
             @RequestParam(required = false) List<String> furnishing,
-            @RequestParam(required = false, defaultValue = "") String additionalCriteria) {
+            @RequestParam(required = false, defaultValue = "") String additionalCriteria,
+            @RequestParam(required = false) String action) {
 
         SearchConfig config;
         if (id != null && !id.isBlank()) {
@@ -85,6 +86,10 @@ public class ConfigController {
         config.setAdditionalCriteria(additionalCriteria);
 
         searchConfigRepository.save(config);
+
+        if ("scan".equals(action)) {
+            return "redirect:/config/pipeline/progress";
+        }
         return "redirect:/config/search";
     }
 
@@ -101,6 +106,11 @@ public class ConfigController {
     public String deleteSearchConfig(@PathVariable String id) {
         searchConfigRepository.delete(id);
         return "redirect:/config/search";
+    }
+
+    @GetMapping("/pipeline/progress")
+    public String pipelineProgress() {
+        return "pipeline-progress";
     }
 
     // ── Monitored Sites ───────────────────────────────────────────────────────

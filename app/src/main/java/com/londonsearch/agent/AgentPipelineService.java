@@ -155,6 +155,12 @@ public class AgentPipelineService {
             String normalizedAddr = normalizer.normalizeAddress(ep.address());
             if (normalizedAddr == null || normalizedAddr.isBlank()) continue;
 
+            // Skip hallucinated/placeholder addresses
+            if (normalizer.isFakeAddress(ep.address())) {
+                log.warn("Skipping fake/placeholder address: {}", ep.address());
+                continue;
+            }
+
             // Skip entries with no parseable price (garbage extraction)
             Integer pricePerMonth = normalizer.parsePricePerMonth(ep.price());
             if (pricePerMonth == null) {

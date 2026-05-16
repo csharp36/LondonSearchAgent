@@ -90,6 +90,11 @@ public class FeedController {
             }
         }
 
+        // Filter out properties with 0 listings — every property must have at least one source
+        properties = properties.stream()
+                .filter(p -> listingCounts.getOrDefault(p.getId(), 0) > 0)
+                .toList();
+
         // Calculate area counts from the properties already loaded
         List<Property> allProperties = propertyRepository.findAll();
         Map<String, Integer> areaCounts = new HashMap<>();

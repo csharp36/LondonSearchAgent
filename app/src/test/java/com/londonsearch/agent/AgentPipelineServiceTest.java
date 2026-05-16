@@ -29,8 +29,8 @@ class AgentPipelineServiceTest {
                 .filter(p -> {
                     String addr = p.getNormalizedAddress();
                     return addr != null && (
-                            addr.equals("99 test street, london w1k 1aa") ||
-                            addr.startsWith("100 dedup street")
+                            addr.equals("99 grosvenor square, london w1k 1aa") ||
+                            addr.startsWith("100 welbeck way")
                     );
                 })
                 .forEach(p -> propertyRepository.delete(p.getId()));
@@ -45,12 +45,12 @@ class AgentPipelineServiceTest {
     void processExtractedProperties_savesNewProperties() {
         List<ExtractedProperty> extracted = List.of(
                 new ExtractedProperty(
-                        "99 Test Street, London W1K 1AA",
+                        "99 Grosvenor Square, London W1K 1AA",
                         "£7,000 pcm",
                         "2", "1", "900", "Flat", "Furnished",
-                        "A test property in Mayfair",
+                        "A stunning property in Mayfair",
                         "https://example.com/property/test-001",
-                        List.of(), null, "Test Agent", null, null
+                        List.of(), null, "Knight Frank", null, null
                 )
         );
 
@@ -62,19 +62,19 @@ class AgentPipelineServiceTest {
 
         List<Property> mayfairProps = propertyRepository.findByArea("Mayfair");
         boolean found = mayfairProps.stream()
-                .anyMatch(p -> p.getAddress().equals("99 Test Street, London W1K 1AA"));
+                .anyMatch(p -> p.getAddress().equals("99 Grosvenor Square, London W1K 1AA"));
         assertThat(found).isTrue();
     }
 
     @Test
     void processExtractedProperties_skipsExistingByAddress() {
-        String uniqueAddr = "100 Dedup Street, London W1W " + System.nanoTime();
+        String uniqueAddr = "100 Welbeck Way, London W1W " + System.nanoTime();
         List<ExtractedProperty> extracted = List.of(
                 new ExtractedProperty(
                         uniqueAddr,
                         "£5,000 pcm",
                         "1", "1", "500", "Flat", "Unfurnished",
-                        "A test dedup property",
+                        "A spacious flat near Marylebone",
                         "https://example.com/property/dedup-001",
                         List.of(), null, null, null, null
                 )

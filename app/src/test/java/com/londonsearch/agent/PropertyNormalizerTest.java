@@ -78,4 +78,23 @@ class PropertyNormalizerTest {
         assertThat(normalizer.parseInteger(null)).isNull();
         assertThat(normalizer.parseInteger("N/A")).isNull();
     }
+
+    @Test
+    void isFakeAddress_detectsPlaceholders() {
+        assertThat(normalizer.isFakeAddress("123 Fake Street, London")).isTrue();
+        assertThat(normalizer.isFakeAddress("456 High Street")).isTrue();
+        assertThat(normalizer.isFakeAddress("123 Main Street, London")).isTrue();
+        assertThat(normalizer.isFakeAddress("Test Street, Mayfair")).isTrue();
+        assertThat(normalizer.isFakeAddress("Sample Road, London")).isTrue();
+        assertThat(normalizer.isFakeAddress(null)).isTrue();
+        assertThat(normalizer.isFakeAddress("")).isTrue();
+        assertThat(normalizer.isFakeAddress("Short")).isTrue(); // too short
+    }
+
+    @Test
+    void isFakeAddress_allowsRealAddresses() {
+        assertThat(normalizer.isFakeAddress("15 Mount Street, Mayfair, London W1K 2RN")).isFalse();
+        assertThat(normalizer.isFakeAddress("42 Baker Street, Marylebone, London W1U 3BW")).isFalse();
+        assertThat(normalizer.isFakeAddress("8 Onslow Gardens, South Kensington, London SW7 3AQ")).isFalse();
+    }
 }

@@ -11,12 +11,16 @@
         <img th:if="${imageUrl != null}" th:src="${imageUrl}" alt="Property photo"
              class="w-full h-full object-cover" loading="lazy"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-        <!-- Fallback icon (shown when no image or image fails to load) -->
-        <svg th:classappend="${imageUrl != null} ? 'hidden' : ''" class="w-12 h-12 text-slate-500 group-hover:text-slate-400 transition-colors items-center justify-center" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:flex;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 21V12h6v9"/>
-        </svg>
+        <!-- Fallback: show address prominently when no image -->
+        <div th:classappend="${imageUrl != null} ? 'hidden' : ''" class="flex flex-col items-center justify-center px-4 text-center" style="display:flex;">
+            <svg class="w-8 h-8 text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span class="text-slate-300 font-semibold text-sm leading-tight" th:text="${property.address}">Address</span>
+            <span th:if="${property.propertyType != null}" class="text-slate-500 text-xs mt-1" th:text="${property.propertyType}">Type</span>
+        </div>
 
         <!-- NEW badge (top-left) -->
         <span th:if="${property.status == 'new'}"

@@ -2,6 +2,7 @@ package com.londonsearch.agent;
 
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,6 +11,18 @@ import java.util.regex.Pattern;
 public class PropertyNormalizer {
 
     private static final Pattern PRICE_PATTERN = Pattern.compile("[£$]?([\\d,]+)");
+
+    /** Patterns that indicate a hallucinated or placeholder address. */
+    private static final List<Pattern> FAKE_ADDRESS_PATTERNS = List.of(
+            Pattern.compile("\\b123\\s+(fake|main|test|sample|example)\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\b456\\s+(fake|main|test|sample|example|high)\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\b789\\s+(fake|main|test|sample|example)\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\bfake\\s+street\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\btest\\s+street\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\bsample\\s+(street|road|avenue|lane)\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\bexample\\s+(street|road|avenue|lane)\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\b(tbd|tba|n/?a|unknown|placeholder)\\b", Pattern.CASE_INSENSITIVE)
+    );
 
     private static final Map<String, String> POSTCODE_AREA_MAP = Map.ofEntries(
             Map.entry("W1K", "Mayfair"),
@@ -60,6 +73,20 @@ public class PropertyNormalizer {
         if (lower.contains("marylebone")) return "Marylebone";
         if (lower.contains("south kensington")) return "South Kensington";
         return "Other";
+    }
+
+    /**
+     * Returns true if the address looks like a hallucinated placeholder
+     * rather than a real London address.
+     */
+    public boolean isFakeAddress(String address) {
+        if (address == null || address.isBlank()) return true;
+        for (Pattern p : FAKE_ADDRESS_PATTERNS) {
+            if (p.matcher(address).find()) return true;
+        }
+        // Very short addresses (< 10 chars) are almost certainly garbage
+        if (address.strip().length() < 10) return true;
+        return false;
     }
 
     public Integer parseInteger(String value) {

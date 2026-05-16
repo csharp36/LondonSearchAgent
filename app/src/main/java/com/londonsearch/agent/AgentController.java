@@ -15,9 +15,12 @@ import java.util.Map;
 public class AgentController {
 
     private final AgentPipelineService pipelineService;
+    private final PipelineProgressService progressService;
 
-    public AgentController(AgentPipelineService pipelineService) {
+    public AgentController(AgentPipelineService pipelineService,
+                           PipelineProgressService progressService) {
         this.pipelineService = pipelineService;
+        this.progressService = progressService;
     }
 
     @PostMapping("/run")
@@ -31,6 +34,20 @@ public class AgentController {
                 "updatedProperties", result.updatedProperties(),
                 "errors", result.errors()
         ));
+    }
+
+    @PostMapping("/run-async")
+    public ResponseEntity<Map<String, Object>> runPipelineAsync() {
+        boolean started = progressService.startAsync();
+        if (!started) {
+            return ResponseEntity.ok(Map.of("status", "already_running"));
+        }
+        return ResponseEntity.ok(Map.of("status", "started"));
+    }
+
+    @GetMapping("/progress")
+    public ResponseEntity<PipelineProgressService.PipelineStatus> getProgress() {
+        return ResponseEntity.ok(progressService.getStatus());
     }
 
     @GetMapping("/ping")

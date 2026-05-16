@@ -22,17 +22,28 @@ public class BedrockExtractor implements PropertyExtractor {
     private static final String EXTRACTION_PROMPT = """
             You are a property listing data extractor. Extract ALL rental property listings from the following HTML content.
 
+            CRITICAL RULES:
+            - Only extract REAL listings that appear on the page. Never invent, guess, or hallucinate data.
+            - If a field is not present in the HTML, use null — do NOT make up values.
+            - Addresses must be real London addresses from the HTML. Never output placeholder addresses like "123 Main Street", "456 High Street", "123 Fake Street", or similar generic addresses.
+            - If the HTML has no actual property listings (e.g. it's a homepage, error page, or search form), return [].
+
             For each property listing found, extract these fields:
-            - address: full street address including postcode
-            - price: the rental price as shown (e.g., "£7,500 pcm" or "£1,730 pw")
+            - address: the exact full street address including postcode as shown in the HTML
+            - price: the rental price exactly as shown (e.g., "£7,500 pcm" or "£1,730 pw")
             - bedrooms: number of bedrooms as a string
             - bathrooms: number of bathrooms as a string (use "0" if not specified)
             - sqft: square footage as a string (use null if not specified)
             - propertyType: "Flat", "House", "Studio", "Maisonette", or other
             - furnishing: "Furnished", "Part-furnished", "Unfurnished", or null if not specified
             - description: a brief description of the property (first 200 chars of any description text)
-            - listingUrl: the URL link to the full listing detail page (make it absolute if relative)
-            - imageUrls: array of image URLs (first 3 only, or empty array)
+            - listingUrl: the URL link to the full listing detail page (make it absolute using the site's base URL if relative)
+            - imageUrls: array of up to 5 property photo URLs. Look carefully for:
+              * <img> tags with src, data-src, data-lazy-src, or srcset attributes
+              * CSS background-image URLs in inline styles
+              * <source> tags inside <picture> elements
+              Make URLs absolute (prepend the site's base URL if they start with "/").
+              Exclude tiny icons, logos, agent photos, and SVG placeholders — only include actual property photographs.
             - floorPlanUrl: URL of floor plan image, or null
             - agentName: name of the letting agent, or null
             - agentPhone: phone number of the agent, or null
