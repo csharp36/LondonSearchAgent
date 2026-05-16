@@ -20,7 +20,8 @@ public class PropertyNormalizer {
             Pattern.compile("\\bfake\\s+street\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\bsample\\s+(street|road|avenue|lane)\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\bexample\\s+(street|road|avenue|lane)\\b", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("\\b(tbd|tba|n/?a|unknown|placeholder)\\b", Pattern.CASE_INSENSITIVE)
+            Pattern.compile("\\b(tbd|tba|n/?a|unknown|placeholder)\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("^https?://", Pattern.CASE_INSENSITIVE)  // URLs used as addresses
     );
 
     private static final Map<String, String> POSTCODE_AREA_MAP = Map.ofEntries(

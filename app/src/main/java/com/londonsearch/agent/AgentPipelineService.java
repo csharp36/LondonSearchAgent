@@ -41,6 +41,7 @@ public class AgentPipelineService {
     private final String alertEmailTo;
     private final CostGuard costGuard;
     private final ImageEnricher imageEnricher;
+    private final PlaywrightFetcher playwrightFetcher;
 
     public AgentPipelineService(SiteFetcher siteFetcher,
                                  PropertyExtractor extractor,
@@ -56,7 +57,8 @@ public class AgentPipelineService {
                                  SmartLinkService smartLinkService,
                                  @Value("${app.alert.email-to}") String alertEmailTo,
                                  CostGuard costGuard,
-                                 ImageEnricher imageEnricher) {
+                                 ImageEnricher imageEnricher,
+                                 PlaywrightFetcher playwrightFetcher) {
         this.siteFetcher = siteFetcher;
         this.extractor = extractor;
         this.normalizer = normalizer;
@@ -72,6 +74,7 @@ public class AgentPipelineService {
         this.alertEmailTo = alertEmailTo;
         this.costGuard = costGuard;
         this.imageEnricher = imageEnricher;
+        this.playwrightFetcher = playwrightFetcher;
     }
 
     public RunResult runFullPipeline() {
@@ -115,11 +118,13 @@ public class AgentPipelineService {
     }
 
     public SiteResult processSite(MonitoredSite site) {
-        // Skip JS-rendered sites — Jsoup can't execute JavaScript
-        if ("js-rendered".equals(site.getScraperType())) {
-            log.debug("Skipping {} — requires JS rendering (not supported yet)", site.getName());
+        // Skip blocked sites
+        if ("blocked".equals(site.getScraperType())) {
+            log.debug("Skipping {} — blocked by site (403)", site.getName());
             return new SiteResult(true, new PipelineResult(0, 0, List.of()));
         }
+
+        boolean usePlaywright = "js-rendered".equals(site.getScraperType());
 
         String template = site.getSearchUrlTemplate() != null ? site.getSearchUrlTemplate() : site.getBaseUrl();
 
@@ -130,7 +135,9 @@ public class AgentPipelineService {
         String lastHash = null;
 
         for (String url : urls) {
-            Optional<SiteFetcher.FetchResult> fetchResult = siteFetcher.fetch(url);
+            Optional<SiteFetcher.FetchResult> fetchResult = usePlaywright
+                    ? playwrightFetcher.fetch(url)
+                    : siteFetcher.fetch(url);
             if (fetchResult.isEmpty()) continue;
 
             SiteFetcher.FetchResult result = fetchResult.get();

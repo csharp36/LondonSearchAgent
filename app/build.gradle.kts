@@ -21,6 +21,7 @@ dependencies {
     implementation(libs.aws.url.connection.client)
     implementation(libs.aws.s3)
     implementation(libs.jsoup)
+    implementation(libs.playwright)
     implementation(libs.aws.bedrockruntime)
     implementation(libs.aws.ses)
 
