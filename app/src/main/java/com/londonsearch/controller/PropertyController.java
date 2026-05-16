@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -38,9 +39,18 @@ public class PropertyController {
             propertyRepository.save(property);
         }
 
+        // Collect all image URLs from listings
+        List<String> allImages = new ArrayList<>();
+        for (Listing l : listings) {
+            if (l.getImageUrls() != null) {
+                allImages.addAll(l.getImageUrls());
+            }
+        }
+
         model.addAttribute("property", property);
         model.addAttribute("listings", listings);
         model.addAttribute("listingCount", listings.size());
+        model.addAttribute("images", allImages);
 
         return "property-detail";
     }

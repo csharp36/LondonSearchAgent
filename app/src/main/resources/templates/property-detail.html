@@ -49,31 +49,32 @@
         <p class="text-slate-400 text-sm" th:text="${property.area}">Area</p>
     </div>
 
-    <!-- Photo grid placeholder (2/3 + 1/3 split with 2 rows) -->
-    <div class="grid grid-cols-3 gap-2 h-64 mb-6 rounded-xl overflow-hidden">
-        <!-- Main large photo (2/3 width, full height) -->
-        <div class="col-span-2 bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center">
-            <svg class="w-16 h-16 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 21V12h6v9"/>
-            </svg>
+    <!-- Photo grid -->
+    <div th:if="${!images.isEmpty()}" class="grid grid-cols-3 gap-2 h-64 mb-6 rounded-xl overflow-hidden">
+        <!-- Main photo -->
+        <div class="col-span-2 bg-gradient-to-br from-slate-700 to-slate-600">
+            <img th:src="${images[0]}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
+                 onerror="this.parentElement.classList.add('flex','items-center','justify-center'); this.style.display='none';">
         </div>
-        <!-- Right column: 2 rows (1/3 width) -->
+        <!-- Right column -->
         <div class="flex flex-col gap-2">
-            <div class="flex-1 bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center">
-                <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909"/>
-                </svg>
+            <div class="flex-1 bg-gradient-to-br from-slate-600 to-slate-700 overflow-hidden">
+                <img th:if="${images.size() > 1}" th:src="${images[1]}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
+                     onerror="this.style.display='none';">
             </div>
-            <div class="flex-1 bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center">
-                <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909"/>
-                </svg>
+            <div class="flex-1 bg-gradient-to-br from-slate-700 to-slate-600 overflow-hidden">
+                <img th:if="${images.size() > 2}" th:src="${images[2]}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
+                     onerror="this.style.display='none';">
             </div>
         </div>
+    </div>
+    <!-- Placeholder when no images -->
+    <div th:if="${images.isEmpty()}" class="h-48 mb-6 rounded-xl overflow-hidden bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center">
+        <svg class="w-16 h-16 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 21V12h6v9"/>
+        </svg>
     </div>
 
     <!-- Stats bar -->

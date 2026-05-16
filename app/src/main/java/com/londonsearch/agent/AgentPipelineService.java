@@ -112,6 +112,14 @@ public class AgentPipelineService {
     }
 
     public SiteResult processSite(MonitoredSite site) {
+        // Skip JS-rendered sites — Jsoup can't execute JavaScript, so these return
+        // empty shells that cause the AI to hallucinate fake listings.
+        // These sites need Playwright (Phase 5+) for proper extraction.
+        if ("js-rendered".equals(site.getScraperType())) {
+            log.debug("Skipping {} — requires JS rendering (not supported yet)", site.getName());
+            return new SiteResult(true, new PipelineResult(0, 0, List.of()));
+        }
+
         String url = site.getSearchUrlTemplate() != null ? site.getSearchUrlTemplate() : site.getBaseUrl();
 
         Optional<SiteFetcher.FetchResult> fetchResult = siteFetcher.fetch(url);
