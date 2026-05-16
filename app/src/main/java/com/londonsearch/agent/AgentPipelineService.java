@@ -143,9 +143,23 @@ public class AgentPipelineService {
         int newCount = 0, updatedCount = 0;
         List<String> newPropertyIds = new ArrayList<>();
 
+        // Get max price from active search config for budget filtering
+        Integer maxPrice = searchConfigRepo.findAll().stream()
+                .filter(c -> Boolean.TRUE.equals(c.getEnabled()))
+                .map(SearchConfig::getMaxPrice)
+                .findFirst()
+                .orElse(null);
+
         for (ExtractedProperty ep : extracted) {
             String normalizedAddr = normalizer.normalizeAddress(ep.address());
             if (normalizedAddr == null || normalizedAddr.isBlank()) continue;
+
+            // Filter out properties above budget
+            Integer pricePerMonth = normalizer.parsePricePerMonth(ep.price());
+            if (maxPrice != null && pricePerMonth != null && pricePerMonth > maxPrice) {
+                log.debug("Skipping {} — £{}/mo exceeds budget of £{}/mo", ep.address(), pricePerMonth, maxPrice);
+                continue;
+            }
 
             Optional<DeduplicationService.DedupMatch> match = deduplicationService.findMatch(normalizedAddr);
 
