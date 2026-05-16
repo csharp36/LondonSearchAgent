@@ -13,6 +13,7 @@ public class DataStack extends Stack {
     private final TableV2 listingsTable;
     private final TableV2 searchConfigsTable;
     private final TableV2 monitoredSitesTable;
+    private final TableV2 alertsTable;
     private final Bucket imagesBucket;
 
     public DataStack(Construct scope, String id, StackProps props) {
@@ -60,6 +61,13 @@ public class DataStack extends Stack {
                 .removalPolicy(RemovalPolicy.RETAIN)
                 .build();
 
+        this.alertsTable = TableV2.Builder.create(this, "Alerts")
+                .tableName("Alerts")
+                .partitionKey(Attribute.builder().name("id").type(AttributeType.STRING).build())
+                .billing(Billing.onDemand())
+                .removalPolicy(RemovalPolicy.RETAIN)
+                .build();
+
         this.imagesBucket = Bucket.Builder.create(this, "Images")
                 .versioned(false)
                 .encryption(BucketEncryption.S3_MANAGED)
@@ -72,5 +80,6 @@ public class DataStack extends Stack {
     public TableV2 getListingsTable() { return listingsTable; }
     public TableV2 getSearchConfigsTable() { return searchConfigsTable; }
     public TableV2 getMonitoredSitesTable() { return monitoredSitesTable; }
+    public TableV2 getAlertsTable() { return alertsTable; }
     public Bucket getImagesBucket() { return imagesBucket; }
 }

@@ -21,7 +21,8 @@ public class InfraApp {
         PortalStack portal = new PortalStack(app, "LondonSearch-Portal", stackProps,
                 network.getVpc(), data.getPropertiesTable(), data.getListingsTable(),
                 data.getSearchConfigsTable(), data.getMonitoredSitesTable(),
-                data.getImagesBucket());
+                data.getImagesBucket(), data.getAlertsTable());
+        ScheduleStack schedule = new ScheduleStack(app, "LondonSearch-Schedule", stackProps);
 
         app.synth();
     }

@@ -19,7 +19,7 @@ public class PortalStack extends Stack {
     public PortalStack(Construct scope, String id, StackProps props,
                        Vpc vpc, TableV2 propertiesTable, TableV2 listingsTable,
                        TableV2 searchConfigsTable, TableV2 monitoredSitesTable,
-                       Bucket imagesBucket) {
+                       Bucket imagesBucket, TableV2 alertsTable) {
         super(scope, id, props);
 
         Cluster cluster = Cluster.Builder.create(this, "Cluster")
@@ -41,7 +41,8 @@ public class PortalStack extends Stack {
                                         "PROPERTIES_TABLE", propertiesTable.getTableName(),
                                         "LISTINGS_TABLE", listingsTable.getTableName(),
                                         "SEARCH_CONFIGS_TABLE", searchConfigsTable.getTableName(),
-                                        "MONITORED_SITES_TABLE", monitoredSitesTable.getTableName()
+                                        "MONITORED_SITES_TABLE", monitoredSitesTable.getTableName(),
+                                        "ALERTS_TABLE", alertsTable.getTableName()
                                 ))
                                 .build())
                         .publicLoadBalancer(true)
@@ -51,6 +52,7 @@ public class PortalStack extends Stack {
         listingsTable.grantReadWriteData(service.getTaskDefinition().getTaskRole());
         searchConfigsTable.grantReadWriteData(service.getTaskDefinition().getTaskRole());
         monitoredSitesTable.grantReadWriteData(service.getTaskDefinition().getTaskRole());
+        alertsTable.grantReadWriteData(service.getTaskDefinition().getTaskRole());
         imagesBucket.grantReadWrite(service.getTaskDefinition().getTaskRole());
 
         CfnOutput.Builder.create(this, "PortalUrl")
