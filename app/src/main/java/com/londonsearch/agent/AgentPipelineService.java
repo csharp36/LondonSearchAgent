@@ -151,41 +151,14 @@ public class AgentPipelineService {
         int newCount = 0, updatedCount = 0;
         List<String> newPropertyIds = new ArrayList<>();
 
-        // Get search criteria from active config for filtering
-        SearchConfig activeConfig = searchConfigRepo.findAll().stream()
-                .filter(c -> Boolean.TRUE.equals(c.getEnabled()))
-                .findFirst()
-                .orElse(null);
-
-        Integer maxPrice = activeConfig != null ? activeConfig.getMaxPrice() : null;
-        Integer minPrice = activeConfig != null ? activeConfig.getMinPrice() : null;
-        Integer minBeds = activeConfig != null ? activeConfig.getMinBeds() : null;
-
         for (ExtractedProperty ep : extracted) {
             String normalizedAddr = normalizer.normalizeAddress(ep.address());
             if (normalizedAddr == null || normalizedAddr.isBlank()) continue;
 
-            // Filter out properties with no usable data
+            // Skip entries with no parseable price (garbage extraction)
             Integer pricePerMonth = normalizer.parsePricePerMonth(ep.price());
             if (pricePerMonth == null) {
                 log.debug("Skipping {} — no parseable price", ep.address());
-                continue;
-            }
-
-            // Filter out properties outside budget
-            if (maxPrice != null && pricePerMonth > maxPrice) {
-                log.debug("Skipping {} — £{}/mo exceeds max budget of £{}/mo", ep.address(), pricePerMonth, maxPrice);
-                continue;
-            }
-            if (minPrice != null && pricePerMonth < minPrice) {
-                log.debug("Skipping {} — £{}/mo below min budget of £{}/mo", ep.address(), pricePerMonth, minPrice);
-                continue;
-            }
-
-            // Filter out properties below minimum bedrooms
-            Integer beds = normalizer.parseInteger(ep.bedrooms());
-            if (minBeds != null && beds != null && beds < minBeds) {
-                log.debug("Skipping {} — {} beds below minimum of {}", ep.address(), beds, minBeds);
                 continue;
             }
 
