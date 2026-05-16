@@ -4,6 +4,12 @@ app:
     region: eu-west-2
     dynamodb:
       endpoint: http://localhost:8000
+    tables:
+      properties: Test_Properties
+      listings: Test_Listings
+      search-configs: Test_SearchConfigs
+      monitored-sites: Test_MonitoredSites
+      alerts: Test_Alerts
   seed-data: false
   agent:
     extractor: mock

@@ -40,6 +40,7 @@ public class AgentPipelineService {
     private final SmartLinkService smartLinkService;
     private final String alertEmailTo;
     private final CostGuard costGuard;
+    private final ImageEnricher imageEnricher;
 
     public AgentPipelineService(SiteFetcher siteFetcher,
                                  PropertyExtractor extractor,
@@ -54,7 +55,8 @@ public class AgentPipelineService {
                                  AlertService alertService,
                                  SmartLinkService smartLinkService,
                                  @Value("${app.alert.email-to}") String alertEmailTo,
-                                 CostGuard costGuard) {
+                                 CostGuard costGuard,
+                                 ImageEnricher imageEnricher) {
         this.siteFetcher = siteFetcher;
         this.extractor = extractor;
         this.normalizer = normalizer;
@@ -69,6 +71,7 @@ public class AgentPipelineService {
         this.smartLinkService = smartLinkService;
         this.alertEmailTo = alertEmailTo;
         this.costGuard = costGuard;
+        this.imageEnricher = imageEnricher;
     }
 
     public RunResult runFullPipeline() {
@@ -140,6 +143,9 @@ public class AgentPipelineService {
             updateSiteHash(site, result.hash());
             return new SiteResult(false, new PipelineResult(0, 0, List.of()));
         }
+
+        // Enrich listings that have no images by fetching og:image from their listing pages
+        extracted = imageEnricher.enrich(extracted);
 
         PipelineResult pipelineResult = processExtractedProperties(extracted, site.getName(), site.getBaseUrl());
         updateSiteHash(site, result.hash());

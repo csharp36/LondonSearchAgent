@@ -2,8 +2,10 @@ package com.londonsearch.controller;
 
 import com.londonsearch.model.Listing;
 import com.londonsearch.model.Property;
+import com.londonsearch.model.SearchConfig;
 import com.londonsearch.repository.ListingRepository;
 import com.londonsearch.repository.PropertyRepository;
+import com.londonsearch.repository.SearchConfigRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,10 +23,14 @@ public class FeedController {
 
     private final PropertyRepository propertyRepository;
     private final ListingRepository listingRepository;
+    private final SearchConfigRepository searchConfigRepository;
 
-    public FeedController(PropertyRepository propertyRepository, ListingRepository listingRepository) {
+    public FeedController(PropertyRepository propertyRepository,
+                          ListingRepository listingRepository,
+                          SearchConfigRepository searchConfigRepository) {
         this.propertyRepository = propertyRepository;
         this.listingRepository = listingRepository;
+        this.searchConfigRepository = searchConfigRepository;
     }
 
     @GetMapping("/")
@@ -94,6 +100,26 @@ public class FeedController {
         properties = properties.stream()
                 .filter(p -> listingCounts.getOrDefault(p.getId(), 0) > 0)
                 .toList();
+
+        // Apply price filtering from active search config
+        SearchConfig activeConfig = searchConfigRepository.findAll().stream()
+                .filter(c -> Boolean.TRUE.equals(c.getEnabled()))
+                .findFirst().orElse(null);
+        if (activeConfig != null) {
+            Integer minPrice = activeConfig.getMinPrice();
+            Integer maxPrice = activeConfig.getMaxPrice();
+            if (minPrice != null || maxPrice != null) {
+                properties = properties.stream()
+                        .filter(p -> {
+                            Integer price = p.getPricePerMonth();
+                            if (price == null) return true; // keep properties with unknown price
+                            if (minPrice != null && price < minPrice) return false;
+                            if (maxPrice != null && price > maxPrice) return false;
+                            return true;
+                        })
+                        .toList();
+            }
+        }
 
         // Calculate area counts from the properties already loaded
         List<Property> allProperties = propertyRepository.findAll();

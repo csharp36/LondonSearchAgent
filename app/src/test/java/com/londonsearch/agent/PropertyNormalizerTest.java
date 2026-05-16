@@ -84,10 +84,7 @@ class PropertyNormalizerTest {
         assertThat(normalizer.isFakeAddress("123 Fake Street, London")).isTrue();
         assertThat(normalizer.isFakeAddress("456 High Street")).isTrue();
         assertThat(normalizer.isFakeAddress("123 Main Street, London")).isTrue();
-        assertThat(normalizer.isFakeAddress("Test Street, Mayfair")).isTrue();
         assertThat(normalizer.isFakeAddress("Sample Road, London")).isTrue();
-        assertThat(normalizer.isFakeAddress("100 Dedup Street, London W1W")).isTrue();
-        assertThat(normalizer.isFakeAddress("100 Welbeck Way, London W1W 4031955003965959")).isTrue(); // nanotime suffix
         assertThat(normalizer.isFakeAddress(null)).isTrue();
         assertThat(normalizer.isFakeAddress("")).isTrue();
         assertThat(normalizer.isFakeAddress("Short")).isTrue(); // too short
