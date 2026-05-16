@@ -1,5 +1,7 @@
 package com.londonsearch.agent;
 
+import com.londonsearch.alert.AlertService;
+import com.londonsearch.alert.SmartLinkService;
 import com.londonsearch.model.Listing;
 import com.londonsearch.model.MonitoredSite;
 import com.londonsearch.model.Property;
@@ -10,6 +12,7 @@ import com.londonsearch.repository.PropertyRepository;
 import com.londonsearch.repository.SearchConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -33,6 +36,10 @@ public class AgentPipelineService {
     private final StructuredScorer structuredScorer;
     private final PropertyIntelligence intelligence;
     private final SearchConfigRepository searchConfigRepo;
+    private final AlertService alertService;
+    private final SmartLinkService smartLinkService;
+    private final String alertEmailTo;
+    private final CostGuard costGuard;
 
     public AgentPipelineService(SiteFetcher siteFetcher,
                                  PropertyExtractor extractor,
@@ -43,7 +50,11 @@ public class AgentPipelineService {
                                  DeduplicationService deduplicationService,
                                  StructuredScorer structuredScorer,
                                  PropertyIntelligence intelligence,
-                                 SearchConfigRepository searchConfigRepo) {
+                                 SearchConfigRepository searchConfigRepo,
+                                 AlertService alertService,
+                                 SmartLinkService smartLinkService,
+                                 @Value("${app.alert.email-to}") String alertEmailTo,
+                                 CostGuard costGuard) {
         this.siteFetcher = siteFetcher;
         this.extractor = extractor;
         this.normalizer = normalizer;
@@ -54,9 +65,17 @@ public class AgentPipelineService {
         this.structuredScorer = structuredScorer;
         this.intelligence = intelligence;
         this.searchConfigRepo = searchConfigRepo;
+        this.alertService = alertService;
+        this.smartLinkService = smartLinkService;
+        this.alertEmailTo = alertEmailTo;
+        this.costGuard = costGuard;
     }
 
     public RunResult runFullPipeline() {
+        if (!costGuard.canProceed()) {
+            log.warn("Pipeline blocked by cost guard");
+            return new RunResult(0, 0, 0, 0, List.of("Pipeline blocked by cost guard"));
+        }
         log.info("Starting agent pipeline run");
         List<MonitoredSite> sites = siteRepo.findAll().stream()
                 .filter(s -> Boolean.TRUE.equals(s.getEnabled()))
@@ -64,6 +83,7 @@ public class AgentPipelineService {
 
         int totalNew = 0, totalUpdated = 0, sitesProcessed = 0, sitesSkipped = 0;
         List<String> errors = new ArrayList<>();
+        List<String> allNewPropertyIds = new ArrayList<>();
 
         for (MonitoredSite site : sites) {
             try {
@@ -74,11 +94,16 @@ public class AgentPipelineService {
                     sitesProcessed++;
                     totalNew += result.pipelineResult().newProperties();
                     totalUpdated += result.pipelineResult().updatedProperties();
+                    allNewPropertyIds.addAll(result.pipelineResult().newPropertyIds());
                 }
             } catch (Exception e) {
                 log.error("Error processing site {}: {}", site.getName(), e.getMessage());
                 errors.add(site.getName() + ": " + e.getMessage());
             }
+        }
+
+        if (!allNewPropertyIds.isEmpty()) {
+            sendAlert(allNewPropertyIds);
         }
 
         log.info("Pipeline complete: {} sites processed, {} skipped, {} new, {} updated",
@@ -91,21 +116,21 @@ public class AgentPipelineService {
 
         Optional<SiteFetcher.FetchResult> fetchResult = siteFetcher.fetch(url);
         if (fetchResult.isEmpty()) {
-            return new SiteResult(true, new PipelineResult(0, 0));
+            return new SiteResult(true, new PipelineResult(0, 0, List.of()));
         }
 
         SiteFetcher.FetchResult result = fetchResult.get();
 
         if (!SiteFetcher.hasChanged(result.hash(), site.getLastChangeHash())) {
             log.info("No changes detected for {}", site.getName());
-            return new SiteResult(true, new PipelineResult(0, 0));
+            return new SiteResult(true, new PipelineResult(0, 0, List.of()));
         }
 
         List<ExtractedProperty> extracted = extractor.extract(result.html(), site.getName());
         if (extracted.isEmpty()) {
             log.warn("No properties extracted from {}", site.getName());
             updateSiteHash(site, result.hash());
-            return new SiteResult(false, new PipelineResult(0, 0));
+            return new SiteResult(false, new PipelineResult(0, 0, List.of()));
         }
 
         PipelineResult pipelineResult = processExtractedProperties(extracted, site.getName(), site.getBaseUrl());
@@ -116,6 +141,7 @@ public class AgentPipelineService {
     public PipelineResult processExtractedProperties(List<ExtractedProperty> extracted,
                                                       String siteName, String siteBaseUrl) {
         int newCount = 0, updatedCount = 0;
+        List<String> newPropertyIds = new ArrayList<>();
 
         for (ExtractedProperty ep : extracted) {
             String normalizedAddr = normalizer.normalizeAddress(ep.address());
@@ -137,11 +163,12 @@ public class AgentPipelineService {
                 propertyRepo.save(prop);
                 scoreAndAssess(prop);
                 saveListing(prop.getId(), ep, siteName, siteBaseUrl);
+                newPropertyIds.add(prop.getId());
                 newCount++;
             }
         }
 
-        return new PipelineResult(newCount, updatedCount);
+        return new PipelineResult(newCount, updatedCount, newPropertyIds);
     }
 
     private Property createProperty(ExtractedProperty ep, String normalizedAddr) {
@@ -215,7 +242,27 @@ public class AgentPipelineService {
         siteRepo.save(site);
     }
 
-    public record PipelineResult(int newProperties, int updatedProperties) {}
+    private void sendAlert(List<String> newPropertyIds) {
+        try {
+            List<Property> newProperties = newPropertyIds.stream()
+                    .map(id -> propertyRepo.findById(id).orElse(null))
+                    .filter(java.util.Objects::nonNull)
+                    .sorted(java.util.Comparator.comparing(
+                            (Property p) -> p.getMatchScore() != null ? p.getMatchScore() : 0).reversed())
+                    .limit(5)
+                    .toList();
+            if (newProperties.isEmpty()) return;
+
+            String smartLink = smartLinkService.generateSmartLink(
+                    newPropertyIds, alertEmailTo, newPropertyIds.size());
+            alertService.sendNewPropertiesAlert(newProperties, smartLink);
+            log.info("Alert sent for {} new properties", newPropertyIds.size());
+        } catch (Exception e) {
+            log.error("Failed to send alert: {}", e.getMessage());
+        }
+    }
+
+    public record PipelineResult(int newProperties, int updatedProperties, List<String> newPropertyIds) {}
     public record SiteResult(boolean skipped, PipelineResult pipelineResult) {}
     public record RunResult(int sitesProcessed, int sitesSkipped, int newProperties,
                             int updatedProperties, List<String> errors) {}
