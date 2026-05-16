@@ -50,7 +50,7 @@ class AgentPipelineServiceTest {
                         "2", "1", "900", "Flat", "Furnished",
                         "A stunning property in Mayfair",
                         "https://example.com/property/test-001",
-                        List.of(), null, "Knight Frank", null, null
+                        List.of(), null, null, "Knight Frank", null, null
                 )
         );
 
@@ -76,7 +76,7 @@ class AgentPipelineServiceTest {
                         "1", "1", "500", "Flat", "Unfurnished",
                         "A spacious flat near Marylebone",
                         "https://example.com/property/dedup-001",
-                        List.of(), null, null, null, null
+                        List.of(), null, null, null, null, null
                 )
         );
 

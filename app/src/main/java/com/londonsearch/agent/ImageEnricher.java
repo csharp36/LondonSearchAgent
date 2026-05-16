@@ -37,7 +37,7 @@ public class ImageEnricher {
                 enriched.add(new ExtractedProperty(
                         ep.address(), ep.price(), ep.bedrooms(), ep.bathrooms(),
                         ep.sqft(), ep.propertyType(), ep.furnishing(), ep.description(),
-                        ep.listingUrl(), images, ep.floorPlanUrl(),
+                        ep.listingUrl(), images, ep.floorPlanUrl(), ep.availableFrom(),
                         ep.agentName(), ep.agentPhone(), ep.agentEmail()
                 ));
                 log.debug("Enriched {} with {} images from og:image", ep.address(), images.size());

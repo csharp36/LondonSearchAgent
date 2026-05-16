@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,10 +49,19 @@ public class PropertyController {
             }
         }
 
+        // Format first seen date for display
+        String firstSeenFormatted = null;
+        if (property.getFirstSeenAt() != null) {
+            firstSeenFormatted = DateTimeFormatter.ofPattern("dd MMM yyyy")
+                    .withZone(ZoneId.of("Europe/London"))
+                    .format(property.getFirstSeenAt());
+        }
+
         model.addAttribute("property", property);
         model.addAttribute("listings", listings);
         model.addAttribute("listingCount", listings.size());
         model.addAttribute("images", allImages);
+        model.addAttribute("firstSeenFormatted", firstSeenFormatted);
 
         return "property-detail";
     }

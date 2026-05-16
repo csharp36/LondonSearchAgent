@@ -111,6 +111,14 @@
                   class="font-bold text-base"
                   th:text="${property.matchScore} + '%'">0%</span>
         </div>
+        <div th:if="${firstSeenFormatted != null}">
+            <span class="text-xs text-slate-400 block mb-0.5">First Listed</span>
+            <span class="text-slate-100 font-semibold" th:text="${firstSeenFormatted}">-</span>
+        </div>
+        <div th:if="${property.availableFrom != null}">
+            <span class="text-xs text-slate-400 block mb-0.5">Available From</span>
+            <span class="text-slate-100 font-semibold" th:text="${property.availableFrom}">-</span>
+        </div>
     </div>
 
     <!-- Two-column layout -->
@@ -140,25 +148,46 @@
             <!-- Map -->
             <div>
                 <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-2">Location</h2>
-                <a th:href="'https://www.google.com/maps/search/?api=1&query=' + ${#uris.escapeQueryParam(property.address)}"
-                   target="_blank" rel="noopener noreferrer" class="block">
-                    <div class="rounded-lg overflow-hidden border border-slate-700 hover:border-blue-500 transition-colors">
-                        <iframe
-                            th:src="'https://maps.google.com/maps?q=' + ${#uris.escapeQueryParam(property.address)} + '&t=&z=15&ie=UTF8&iwloc=&output=embed'"
-                            class="w-full h-48 pointer-events-none"
-                            style="border:0;" allowfullscreen="" loading="lazy"
-                            referrerpolicy="no-referrer-when-downgrade">
-                        </iframe>
-                        <div class="bg-slate-800 px-3 py-2 flex items-center gap-1.5 text-xs text-blue-400">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                            Open in Google Maps
-                        </div>
-                    </div>
-                </a>
+                <div class="rounded-lg overflow-hidden border border-slate-700">
+                    <div id="property-map" style="height: 200px; background: #1e293b;"></div>
+                    <a th:href="'https://www.google.com/maps/search/?api=1&query=' + ${#uris.escapeQueryParam(property.address)}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="bg-slate-800 px-3 py-2 flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        Open in Google Maps
+                    </a>
+                </div>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <script th:inline="javascript">
+                    (function() {
+                        var address = /*[[${property.address}]]*/ '';
+                        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address + ', London, UK') + '&format=json&limit=1')
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                if (data.length > 0) {
+                                    var lat = parseFloat(data[0].lat);
+                                    var lon = parseFloat(data[0].lon);
+                                    var map = L.map('property-map').setView([lat, lon], 16);
+                                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                        attribution: '&copy; OpenStreetMap'
+                                    }).addTo(map);
+                                    L.marker([lat, lon]).addTo(map);
+                                } else {
+                                    document.getElementById('property-map').innerHTML =
+                                        '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:0.875rem;">Map not available for this address</div>';
+                                }
+                            })
+                            .catch(function() {
+                                document.getElementById('property-map').innerHTML =
+                                    '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:0.875rem;">Map not available</div>';
+                            });
+                    })();
+                </script>
             </div>
         </div>
 

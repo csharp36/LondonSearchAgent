@@ -324,8 +324,8 @@ public class DataSeeder implements CommandLineRunner {
 
         // Tier 1
         saveMonitoredSite("site-knight-frank", "Knight Frank", "https://www.knightfrank.co.uk",
-                "https://www.knightfrank.co.uk/properties/residential/to-let/uk-greater-london-london/all-types/2-3-beds;pricemax=9000;pricemin=5000;availability=available",
-                "authenticated", true, "tier1");
+                "https://www.knightfrank.co.uk/properties/residential/to-let/uk-greater-london-{area}/all-types/{minBeds}-{maxBeds}-beds;pricemin={minPrice};pricemax={maxPrice}",
+                "http", true, "tier1");
 
         saveMonitoredSite("site-savills", "Savills", "https://www.savills.co.uk",
                 "https://search.savills.com/list?SearchList=Id_51730+Category_TownVillageCity&Tenure=GRS_T_R&SortOrder=SO_PCDD&MinPrice=5000&MaxPrice=9000&MinBedrooms=2&MaxBedrooms=3&Category=GRS_CAT_RES&Currency=GBP&Period=Month",
@@ -336,7 +336,7 @@ public class DataSeeder implements CommandLineRunner {
                 "js-rendered", true, "tier1");
 
         saveMonitoredSite("site-chestertons", "Chestertons", "https://www.chestertons.co.uk",
-                "https://www.chestertons.co.uk/london/mayfair/lettings",
+                "https://www.chestertons.co.uk/london/{area}/lettings",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-strutt-parker", "Strutt & Parker", "https://www.struttandparker.com",
@@ -360,7 +360,7 @@ public class DataSeeder implements CommandLineRunner {
                 "http", true, "tier1");
 
         saveMonitoredSite("site-dexters", "Dexters", "https://www.dexters.co.uk",
-                "https://www.dexters.co.uk/property-lettings/properties-to-rent-in-mayfair",
+                "https://www.dexters.co.uk/property-lettings/properties-to-rent-in-{area}",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-benham-reeves", "Benham & Reeves", "https://www.benhams.com",

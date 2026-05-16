@@ -18,6 +18,7 @@ public record ExtractedProperty(
         @JsonProperty("listingUrl") String listingUrl,
         @JsonProperty("imageUrls") List<String> imageUrls,
         @JsonProperty("floorPlanUrl") String floorPlanUrl,
+        @JsonProperty("availableFrom") String availableFrom,
         @JsonProperty("agentName") String agentName,
         @JsonProperty("agentPhone") String agentPhone,
         @JsonProperty("agentEmail") String agentEmail

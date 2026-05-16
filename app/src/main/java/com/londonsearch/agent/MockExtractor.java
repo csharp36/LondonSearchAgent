@@ -24,7 +24,7 @@ public class MockExtractor implements PropertyExtractor {
                         "2", "2", "850", "Flat", "Furnished",
                         "A stylish two bedroom apartment in this popular Marylebone street, moments from Regent's Park.",
                         "https://www." + siteName.toLowerCase().replace(" ", "") + ".co.uk/property/mock-001",
-                        List.of(), null,
+                        List.of(), null, "Available now",
                         siteName + " Lettings", "020 7946 0001", null
                 ),
                 new ExtractedProperty(
@@ -33,7 +33,7 @@ public class MockExtractor implements PropertyExtractor {
                         "3", "2", "1,100", "Flat", "Furnished",
                         "An exceptional three bedroom apartment in the heart of Mayfair with views over the rooftops.",
                         "https://www." + siteName.toLowerCase().replace(" ", "") + ".co.uk/property/mock-002",
-                        List.of(), null,
+                        List.of(), null, "01/07/2026",
                         siteName + " Lettings", "020 7946 0002", null
                 )
         );

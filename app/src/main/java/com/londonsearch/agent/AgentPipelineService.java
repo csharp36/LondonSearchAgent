@@ -115,41 +115,71 @@ public class AgentPipelineService {
     }
 
     public SiteResult processSite(MonitoredSite site) {
-        // Skip JS-rendered sites — Jsoup can't execute JavaScript, so these return
-        // empty shells that cause the AI to hallucinate fake listings.
-        // These sites need Playwright (Phase 5+) for proper extraction.
+        // Skip JS-rendered sites — Jsoup can't execute JavaScript
         if ("js-rendered".equals(site.getScraperType())) {
             log.debug("Skipping {} — requires JS rendering (not supported yet)", site.getName());
             return new SiteResult(true, new PipelineResult(0, 0, List.of()));
         }
 
-        String url = site.getSearchUrlTemplate() != null ? site.getSearchUrlTemplate() : site.getBaseUrl();
+        String template = site.getSearchUrlTemplate() != null ? site.getSearchUrlTemplate() : site.getBaseUrl();
 
-        Optional<SiteFetcher.FetchResult> fetchResult = siteFetcher.fetch(url);
-        if (fetchResult.isEmpty()) {
-            return new SiteResult(true, new PipelineResult(0, 0, List.of()));
+        // Build targeted URLs — if template contains {area}, expand to one URL per search config area
+        List<String> urls = expandUrls(template);
+
+        List<ExtractedProperty> allExtracted = new ArrayList<>();
+        String lastHash = null;
+
+        for (String url : urls) {
+            Optional<SiteFetcher.FetchResult> fetchResult = siteFetcher.fetch(url);
+            if (fetchResult.isEmpty()) continue;
+
+            SiteFetcher.FetchResult result = fetchResult.get();
+            lastHash = result.hash();
+
+            List<ExtractedProperty> extracted = extractor.extract(result.html(), site.getName());
+            log.info("{}: extracted {} properties from {}", site.getName(), extracted.size(), url);
+            allExtracted.addAll(extracted);
         }
 
-        SiteFetcher.FetchResult result = fetchResult.get();
-
-        if (!SiteFetcher.hasChanged(result.hash(), site.getLastChangeHash())) {
-            log.info("No changes detected for {}", site.getName());
-            return new SiteResult(true, new PipelineResult(0, 0, List.of()));
-        }
-
-        List<ExtractedProperty> extracted = extractor.extract(result.html(), site.getName());
-        if (extracted.isEmpty()) {
-            log.warn("No properties extracted from {}", site.getName());
-            updateSiteHash(site, result.hash());
-            return new SiteResult(false, new PipelineResult(0, 0, List.of()));
+        if (allExtracted.isEmpty()) {
+            if (lastHash != null) updateSiteHash(site, lastHash);
+            return new SiteResult(urls.isEmpty(), new PipelineResult(0, 0, List.of()));
         }
 
         // Enrich listings that have no images by fetching og:image from their listing pages
-        extracted = imageEnricher.enrich(extracted);
+        allExtracted = imageEnricher.enrich(allExtracted);
 
-        PipelineResult pipelineResult = processExtractedProperties(extracted, site.getName(), site.getBaseUrl());
-        updateSiteHash(site, result.hash());
+        PipelineResult pipelineResult = processExtractedProperties(allExtracted, site.getName(), site.getBaseUrl());
+        if (lastHash != null) updateSiteHash(site, lastHash);
         return new SiteResult(false, pipelineResult);
+    }
+
+    /** Expands URL templates with search config values. If template contains {area}, generates one URL per area. */
+    private List<String> expandUrls(String template) {
+        if (!template.contains("{")) return List.of(template);
+
+        SearchConfig config = searchConfigRepo.findAll().stream()
+                .filter(c -> Boolean.TRUE.equals(c.getEnabled()))
+                .findFirst().orElse(null);
+        if (config == null) return List.of(template);
+
+        // Replace non-area placeholders
+        String base = template
+                .replace("{minBeds}", config.getMinBeds() != null ? config.getMinBeds().toString() : "1")
+                .replace("{maxBeds}", config.getMaxBeds() != null ? config.getMaxBeds().toString() : "5")
+                .replace("{minPrice}", config.getMinPrice() != null ? config.getMinPrice().toString() : "0")
+                .replace("{maxPrice}", config.getMaxPrice() != null ? config.getMaxPrice().toString() : "100000");
+
+        if (!base.contains("{area}")) return List.of(base);
+
+        // Expand one URL per target area
+        List<String> areas = config.getAreas();
+        if (areas == null || areas.isEmpty()) {
+            return List.of(base.replace("{area}", "london"));
+        }
+        return areas.stream()
+                .map(area -> base.replace("{area}", area.toLowerCase().replace(" ", "-")))
+                .toList();
     }
 
     public PipelineResult processExtractedProperties(List<ExtractedProperty> extracted,
@@ -213,6 +243,7 @@ public class AgentPipelineService {
         prop.setPropertyType(ep.propertyType());
         prop.setFurnishing(ep.furnishing());
         prop.setDescription(ep.description());
+        prop.setAvailableFrom(ep.availableFrom());
         prop.setStatus("new");
         prop.setFirstSeenAt(Instant.now());
         prop.setLastUpdatedAt(Instant.now());
