@@ -9,3 +9,5 @@ app:
     dynamodb:
       endpoint: http://localhost:8000
   seed-data: true
+  agent:
+    extractor: mock

@@ -5,6 +5,7 @@ aws-sdk = "2.44.5"
 aws-cdk = "2.248.0"
 constructs = "10.4.2"
 htmx-spring = "4.0.1"
+jsoup = "1.18.1"
 
 [libraries]
 aws-dynamodb-enhanced = { module = "software.amazon.awssdk:dynamodb-enhanced" }
@@ -15,6 +16,8 @@ aws-secretsmanager = { module = "software.amazon.awssdk:secretsmanager" }
 aws-cdk-lib = { module = "software.amazon.awscdk:aws-cdk-lib", version.ref = "aws-cdk" }
 constructs = { module = "software.constructs:constructs", version.ref = "constructs" }
 htmx-spring-boot = { module = "io.github.wimdeblauwe:htmx-spring-boot-thymeleaf", version.ref = "htmx-spring" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+aws-bedrockruntime = { module = "software.amazon.awssdk:bedrockruntime" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

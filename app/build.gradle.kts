@@ -20,6 +20,8 @@ dependencies {
     implementation(libs.aws.dynamodb.enhanced)
     implementation(libs.aws.url.connection.client)
     implementation(libs.aws.s3)
+    implementation(libs.jsoup)
+    implementation(libs.aws.bedrockruntime)
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")
 
