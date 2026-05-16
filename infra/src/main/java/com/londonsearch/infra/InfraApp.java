@@ -7,7 +7,9 @@ import software.amazon.awscdk.StackProps;
 public class InfraApp {
 
     public static void main(String[] args) {
-        App app = new App();
+        App app = new App(software.amazon.awscdk.AppProps.builder()
+                .outdir("cdk.out")
+                .build());
 
         Environment env = Environment.builder()
                 .account(System.getenv("CDK_DEFAULT_ACCOUNT"))

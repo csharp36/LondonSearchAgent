@@ -1,5 +1,6 @@
 {
   "app": "cd infra && ../gradlew -q run",
+  "output": "infra/cdk.out",
   "context": {
     "@aws-cdk/core:stackRelativeExports": true
   }

@@ -58,6 +58,12 @@ public class PortalStack extends Stack {
         // Increase task memory for Playwright/Chromium
         // (default 512/1024 may not be enough with headless browser)
 
+        // Health check on /agent/ping (public endpoint, returns 200)
+        service.getTargetGroup().configureHealthCheck(
+                software.amazon.awscdk.services.elasticloadbalancingv2.HealthCheck.builder()
+                        .path("/agent/ping")
+                        .build());
+
         // Grant DynamoDB access
         propertiesTable.grantReadWriteData(service.getTaskDefinition().getTaskRole());
         listingsTable.grantReadWriteData(service.getTaskDefinition().getTaskRole());
