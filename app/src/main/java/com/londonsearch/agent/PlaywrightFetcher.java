@@ -25,8 +25,15 @@ public class PlaywrightFetcher {
             if (playwright == null) {
                 playwright = Playwright.create();
             }
-            browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
-                    .setHeadless(true));
+            BrowserType.LaunchOptions options = new BrowserType.LaunchOptions()
+                    .setHeadless(true);
+            // Use system Chromium in Docker/Alpine (set via PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)
+            String systemChromium = System.getenv("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH");
+            if (systemChromium != null && !systemChromium.isBlank()) {
+                options.setExecutablePath(java.nio.file.Path.of(systemChromium));
+                log.info("PlaywrightFetcher: using system Chromium at {}", systemChromium);
+            }
+            browser = playwright.chromium().launch(options);
             log.info("PlaywrightFetcher: launched headless Chromium");
         }
         return browser;
