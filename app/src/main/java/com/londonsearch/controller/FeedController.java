@@ -75,11 +75,19 @@ public class FeedController {
                     .toList();
         }
 
-        // Calculate listing counts per property
+        // Calculate listing counts and first image per property
         Map<String, Integer> listingCounts = new HashMap<>();
+        Map<String, String> propertyImages = new HashMap<>();
         for (Property p : properties) {
             List<Listing> listings = listingRepository.findByPropertyId(p.getId());
             listingCounts.put(p.getId(), listings.size());
+            // Find first available image from any listing
+            for (Listing l : listings) {
+                if (l.getImageUrls() != null && !l.getImageUrls().isEmpty()) {
+                    propertyImages.put(p.getId(), l.getImageUrls().get(0));
+                    break;
+                }
+            }
         }
 
         // Calculate area counts from all properties
@@ -98,6 +106,7 @@ public class FeedController {
 
         model.addAttribute("properties", properties);
         model.addAttribute("listingCounts", listingCounts);
+        model.addAttribute("propertyImages", propertyImages);
         model.addAttribute("areas", AREAS);
         model.addAttribute("areaCounts", areaCounts);
         model.addAttribute("newCount", newCount);

@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<a th:fragment="property-card(property, listingCount)"
+<a th:fragment="property-card(property, listingCount, imageUrl)"
    th:href="@{/property/{id}(id=${property.id})}"
    class="block bg-slate-800 rounded-lg overflow-hidden hover:ring-1 hover:ring-blue-500 transition-all group">
 
-    <!-- Photo placeholder with gradient -->
-    <div class="relative h-48 bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center">
-        <svg class="w-12 h-12 text-slate-500 group-hover:text-slate-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <!-- Property image or placeholder -->
+    <div class="relative h-48 bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center overflow-hidden">
+        <!-- Show actual image if available -->
+        <img th:if="${imageUrl != null}" th:src="${imageUrl}" alt="Property photo"
+             class="w-full h-full object-cover" loading="lazy"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <!-- Fallback icon (shown when no image or image fails to load) -->
+        <svg th:classappend="${imageUrl != null} ? 'hidden' : ''" class="w-12 h-12 text-slate-500 group-hover:text-slate-400 transition-colors items-center justify-center" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:flex;">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H3.75A.75.75 0 013 21V9.75z"/>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 21V12h6v9"/>

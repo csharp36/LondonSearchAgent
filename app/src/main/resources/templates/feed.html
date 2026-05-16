@@ -35,7 +35,7 @@
     <div th:if="${!properties.isEmpty()}"
          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div th:each="property : ${properties}">
-            <div th:insert="~{fragments/property-card :: property-card(${property}, ${listingCounts[property.id]})}"></div>
+            <div th:insert="~{fragments/property-card :: property-card(${property}, ${listingCounts[property.id]}, ${propertyImages[property.id]})}"></div>
         </div>
     </div>
 

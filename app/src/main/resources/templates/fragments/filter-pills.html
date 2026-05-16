@@ -13,7 +13,7 @@
        th:href="@{/(area=${areaName}, filter=${selectedFilter})}"
        th:classappend="${selectedArea == areaName and !#strings.isEmpty(selectedArea)} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
        class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
-       th:text="${areaName == 'South Kensington' ? 'S. Kensington' : areaName} + ' (' + ${areaCounts[areaName]} + ')'">
+       th:text="${(areaName == 'South Kensington' ? 'S. Kensington' : areaName) + ' (' + (areaCounts.containsKey(areaName) ? areaCounts[areaName] : 0) + ')'}">
     </a>
 
     <!-- Spacer -->

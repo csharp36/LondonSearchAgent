@@ -45,6 +45,11 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        // Skip seeding if data already exists (prevents duplicates on restart)
+        if (!propertyRepository.findAll().isEmpty()) {
+            log.info("Seed data already exists, skipping.");
+            return;
+        }
         log.info("Seeding development data...");
         seedProperties();
         seedSearchConfigs();
