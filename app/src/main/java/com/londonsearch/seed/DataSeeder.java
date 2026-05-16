@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-@Profile("local")
+@Profile({"local", "prod"})
 @Order(2)
 public class DataSeeder implements CommandLineRunner {
 
