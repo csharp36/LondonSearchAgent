@@ -24,6 +24,7 @@ app:
     bedrock:
       region: ${BEDROCK_REGION:us-east-1}
       model-id: ${BEDROCK_MODEL_ID:amazon.nova-micro-v1:0}
+      intelligence-model-id: ${BEDROCK_INTELLIGENCE_MODEL_ID:anthropic.claude-sonnet-4-20250514}
     fetch:
       timeout-seconds: 30
       user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
