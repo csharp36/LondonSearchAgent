@@ -90,25 +90,32 @@ public class FeedController {
             }
         }
 
-        // Calculate area counts from all properties
+        // Calculate area counts from the properties already loaded
         List<Property> allProperties = propertyRepository.findAll();
-        Map<String, Long> areaCounts = new HashMap<>();
+        Map<String, Integer> areaCounts = new HashMap<>();
+        for (Property p : allProperties) {
+            String propArea = p.getArea();
+            if (propArea != null) {
+                areaCounts.merge(propArea, 1, Integer::sum);
+            }
+        }
+        // Ensure all target areas have an entry
         for (String a : AREAS) {
-            long count = allProperties.stream()
-                    .filter(p -> a.equals(p.getArea()))
-                    .count();
-            areaCounts.put(a, count);
+            areaCounts.putIfAbsent(a, 0);
         }
 
-        long newCount = allProperties.stream().filter(p -> "new".equals(p.getStatus())).count();
-        long savedCount = allProperties.stream().filter(p -> "saved".equals(p.getStatus())).count();
-        long totalCount = allProperties.size();
+        int newCount = (int) allProperties.stream().filter(p -> "new".equals(p.getStatus())).count();
+        int savedCount = (int) allProperties.stream().filter(p -> "saved".equals(p.getStatus())).count();
+        int totalCount = allProperties.size();
 
         model.addAttribute("properties", properties);
         model.addAttribute("listingCounts", listingCounts);
         model.addAttribute("propertyImages", propertyImages);
         model.addAttribute("areas", AREAS);
         model.addAttribute("areaCounts", areaCounts);
+        model.addAttribute("mayfairCount", areaCounts.getOrDefault("Mayfair", 0));
+        model.addAttribute("maryleboneCount", areaCounts.getOrDefault("Marylebone", 0));
+        model.addAttribute("southKensingtonCount", areaCounts.getOrDefault("South Kensington", 0));
         model.addAttribute("newCount", newCount);
         model.addAttribute("savedCount", savedCount);
         model.addAttribute("totalCount", totalCount);

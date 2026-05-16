@@ -9,11 +9,20 @@
         All <span class="ml-1 opacity-70" th:text="'(' + ${totalCount} + ')'"></span>
     </a>
 
-    <a th:each="areaName : ${areas}"
-       th:href="@{/(area=${areaName}, filter=${selectedFilter})}"
-       th:classappend="${selectedArea == areaName and !#strings.isEmpty(selectedArea)} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
+    <a th:href="@{/(area=Mayfair, filter=${selectedFilter})}"
+       th:classappend="${selectedArea == 'Mayfair'} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
        class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
-       th:text="${(areaName == 'South Kensington' ? 'S. Kensington' : areaName) + ' (' + (areaCounts.containsKey(areaName) ? areaCounts[areaName] : 0) + ')'}">
+       th:text="'Mayfair (' + ${mayfairCount} + ')'">
+    </a>
+    <a th:href="@{/(area=Marylebone, filter=${selectedFilter})}"
+       th:classappend="${selectedArea == 'Marylebone'} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
+       class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+       th:text="'Marylebone (' + ${maryleboneCount} + ')'">
+    </a>
+    <a th:href="@{/(area='South Kensington', filter=${selectedFilter})}"
+       th:classappend="${selectedArea == 'South Kensington'} ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'"
+       class="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+       th:text="'S. Kensington (' + ${southKensingtonCount} + ')'">
     </a>
 
     <!-- Spacer -->
