@@ -19,9 +19,11 @@ public class PropertyNormalizer {
             Pattern.compile("\\b789\\s+(fake|main|test|sample|example)\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\bfake\\s+street\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\btest\\s+street\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\bdedup\\s+street\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\bsample\\s+(street|road|avenue|lane)\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\bexample\\s+(street|road|avenue|lane)\\b", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("\\b(tbd|tba|n/?a|unknown|placeholder)\\b", Pattern.CASE_INSENSITIVE)
+            Pattern.compile("\\b(tbd|tba|n/?a|unknown|placeholder)\\b", Pattern.CASE_INSENSITIVE),
+            Pattern.compile("\\d{10,}", Pattern.CASE_INSENSITIVE)  // long numbers = test nanotime suffixes
     );
 
     private static final Map<String, String> POSTCODE_AREA_MAP = Map.ofEntries(

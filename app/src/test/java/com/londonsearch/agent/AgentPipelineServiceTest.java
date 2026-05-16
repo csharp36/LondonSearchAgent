@@ -30,7 +30,7 @@ class AgentPipelineServiceTest {
                     String addr = p.getNormalizedAddress();
                     return addr != null && (
                             addr.equals("99 grosvenor square, london w1k 1aa") ||
-                            addr.startsWith("100 welbeck way")
+                            addr.startsWith("flat 1, welbeck way")
                     );
                 })
                 .forEach(p -> propertyRepository.delete(p.getId()));
@@ -68,7 +68,7 @@ class AgentPipelineServiceTest {
 
     @Test
     void processExtractedProperties_skipsExistingByAddress() {
-        String uniqueAddr = "100 Welbeck Way, London W1W " + System.nanoTime();
+        String uniqueAddr = "Flat 1, Welbeck Way, London W1W " + java.util.UUID.randomUUID().toString().substring(0, 4);
         List<ExtractedProperty> extracted = List.of(
                 new ExtractedProperty(
                         uniqueAddr,
