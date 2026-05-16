@@ -19,6 +19,10 @@ app:
       listings: ${LISTINGS_TABLE:Listings}
       search-configs: ${SEARCH_CONFIGS_TABLE:SearchConfigs}
       monitored-sites: ${MONITORED_SITES_TABLE:MonitoredSites}
+      alerts: ${ALERTS_TABLE:Alerts}
+  alert:
+    email-to: ${ALERT_EMAIL:csharp36@gmail.com}
+    portal-base-url: ${PORTAL_BASE_URL:http://localhost:8080}
   agent:
     extractor: ${EXTRACTOR_TYPE:mock}
     bedrock:

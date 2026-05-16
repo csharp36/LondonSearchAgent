@@ -1,5 +1,6 @@
 package com.londonsearch.repository;
 
+import com.londonsearch.model.AlertRecord;
 import com.londonsearch.model.Listing;
 import com.londonsearch.model.MonitoredSite;
 import com.londonsearch.model.Property;
@@ -28,18 +29,21 @@ public class TableInitializer implements CommandLineRunner {
     private final String listingsTable;
     private final String searchConfigsTable;
     private final String monitoredSitesTable;
+    private final String alertsTable;
 
     public TableInitializer(
             DynamoDbEnhancedClient enhancedClient,
             @Value("${app.aws.tables.properties}") String propertiesTable,
             @Value("${app.aws.tables.listings}") String listingsTable,
             @Value("${app.aws.tables.search-configs}") String searchConfigsTable,
-            @Value("${app.aws.tables.monitored-sites}") String monitoredSitesTable) {
+            @Value("${app.aws.tables.monitored-sites}") String monitoredSitesTable,
+            @Value("${app.aws.tables.alerts}") String alertsTable) {
         this.enhancedClient = enhancedClient;
         this.propertiesTable = propertiesTable;
         this.listingsTable = listingsTable;
         this.searchConfigsTable = searchConfigsTable;
         this.monitoredSitesTable = monitoredSitesTable;
+        this.alertsTable = alertsTable;
     }
 
     @Override
@@ -48,6 +52,7 @@ public class TableInitializer implements CommandLineRunner {
         createTable(listingsTable, Listing.class);
         createTable(searchConfigsTable, SearchConfig.class);
         createTable(monitoredSitesTable, MonitoredSite.class);
+        createTable(alertsTable, AlertRecord.class);
     }
 
     private <T> void createTable(String tableName, Class<T> beanClass) {
