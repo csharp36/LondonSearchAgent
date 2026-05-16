@@ -1,11 +1,13 @@
 package com.londonsearch.agent;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.Map;
 
 @RestController
@@ -28,6 +30,14 @@ public class AgentController {
                 "newProperties", result.newProperties(),
                 "updatedProperties", result.updatedProperties(),
                 "errors", result.errors()
+        ));
+    }
+
+    @GetMapping("/ping")
+    public ResponseEntity<Map<String, Object>> ping() {
+        return ResponseEntity.ok(Map.of(
+                "status", "Healthy",
+                "time_of_last_update", Instant.now().getEpochSecond()
         ));
     }
 
