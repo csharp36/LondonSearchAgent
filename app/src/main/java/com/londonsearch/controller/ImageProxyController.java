@@ -50,6 +50,11 @@ public class ImageProxyController {
 
             if (response.statusCode() == 200 && response.body().length > 0) {
                 String contentType = response.headers().firstValue("content-type").orElse("image/jpeg");
+                // Reject non-image responses (e.g. HTML error pages returned with 200)
+                if (!contentType.startsWith("image/")) {
+                    log.debug("ImageProxy: non-image content-type {} for {}", contentType, url);
+                    return ResponseEntity.notFound().build();
+                }
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_TYPE, contentType)
                         .cacheControl(CacheControl.maxAge(24, TimeUnit.HOURS).cachePublic())

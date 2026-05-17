@@ -44,24 +44,18 @@ public class FeedController {
         if (area != null && !area.isBlank()) {
             properties = propertyRepository.findByArea(area);
         } else if ("new".equals(filter)) {
-            properties = propertyRepository.findByStatus("new");
+            properties = propertyRepository.findByStatus("new").stream()
+                    .filter(p -> p.getArea() != null && AREAS.contains(p.getArea()))
+                    .toList();
         } else if ("saved".equals(filter)) {
-            properties = propertyRepository.findByStatus("saved");
+            properties = propertyRepository.findByStatus("saved").stream()
+                    .filter(p -> p.getArea() != null && AREAS.contains(p.getArea()))
+                    .toList();
         } else {
-            properties = propertyRepository.findAll();
-        }
-
-        // Apply area filter on top of status filter when both are provided
-        if (area != null && !area.isBlank() && !"all".equals(filter) && !"all".equals(filter)) {
-            if ("new".equals(filter)) {
-                properties = properties.stream()
-                        .filter(p -> "new".equals(p.getStatus()))
-                        .toList();
-            } else if ("saved".equals(filter)) {
-                properties = properties.stream()
-                        .filter(p -> "saved".equals(p.getStatus()))
-                        .toList();
-            }
+            // Default: only show target areas (Mayfair, Marylebone, South Kensington)
+            properties = propertyRepository.findAll().stream()
+                    .filter(p -> p.getArea() != null && AREAS.contains(p.getArea()))
+                    .toList();
         }
 
         // Sort
@@ -156,9 +150,13 @@ public class FeedController {
             areaCounts.putIfAbsent(a, 0);
         }
 
-        int newCount = (int) allFiltered.stream().filter(p -> "new".equals(p.getStatus())).count();
-        int savedCount = (int) allFiltered.stream().filter(p -> "saved".equals(p.getStatus())).count();
-        int totalCount = allFiltered.size();
+        // Only count properties in target areas for the "All" total
+        List<Property> targetAreaProperties = allFiltered.stream()
+                .filter(p -> p.getArea() != null && AREAS.contains(p.getArea()))
+                .toList();
+        int newCount = (int) targetAreaProperties.stream().filter(p -> "new".equals(p.getStatus())).count();
+        int savedCount = (int) targetAreaProperties.stream().filter(p -> "saved".equals(p.getStatus())).count();
+        int totalCount = targetAreaProperties.size();
 
         model.addAttribute("properties", properties);
         model.addAttribute("listingCounts", listingCounts);

@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,11 +59,21 @@ public class PropertyController {
                     .format(property.getFirstSeenAt());
         }
 
+        // Format availableFrom for display (ISO → "dd MMM yyyy", pass through text like "Available now")
+        String availableFromFormatted = property.getAvailableFrom();
+        if (availableFromFormatted != null && availableFromFormatted.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            try {
+                LocalDate date = LocalDate.parse(availableFromFormatted);
+                availableFromFormatted = date.format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
+            } catch (DateTimeParseException ignored) {}
+        }
+
         model.addAttribute("property", property);
         model.addAttribute("listings", listings);
         model.addAttribute("listingCount", listings.size());
         model.addAttribute("images", allImages);
         model.addAttribute("firstSeenFormatted", firstSeenFormatted);
+        model.addAttribute("availableFromFormatted", availableFromFormatted);
 
         return "property-detail";
     }

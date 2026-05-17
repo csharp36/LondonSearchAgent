@@ -111,9 +111,9 @@
             <span class="text-xs text-slate-400 block mb-0.5">First Listed</span>
             <span class="text-slate-100 font-semibold" th:text="${firstSeenFormatted}">-</span>
         </div>
-        <div th:if="${property.availableFrom != null}">
+        <div th:if="${availableFromFormatted != null}">
             <span class="text-xs text-slate-400 block mb-0.5">Available From</span>
-            <span class="text-slate-100 font-semibold" th:text="${property.availableFrom}">-</span>
+            <span class="text-slate-100 font-semibold" th:text="${availableFromFormatted}">-</span>
         </div>
     </div>
 
