@@ -61,7 +61,13 @@ public class ConfigController {
         SearchConfig config;
         if (id != null && !id.isBlank()) {
             config = searchConfigRepository.findById(id)
-                    .orElse(new SearchConfig());
+                    .orElseGet(() -> {
+                        SearchConfig c = new SearchConfig();
+                        c.setId(id);
+                        c.setCreatedAt(Instant.now());
+                        c.setEnabled(true);
+                        return c;
+                    });
         } else {
             config = new SearchConfig();
             config.setId(UUID.randomUUID().toString());

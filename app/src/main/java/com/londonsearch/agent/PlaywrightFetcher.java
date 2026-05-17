@@ -42,12 +42,14 @@ public class PlaywrightFetcher {
     }
 
     public Optional<SiteFetcher.FetchResult> fetch(String url) {
+        BrowserContext context = null;
+        Page page = null;
         try {
             Browser b = getBrowser();
-            BrowserContext context = b.newContext(new Browser.NewContextOptions()
+            context = b.newContext(new Browser.NewContextOptions()
                     .setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"));
 
-            Page page = context.newPage();
+            page = context.newPage();
             page.setDefaultTimeout(30000);
 
             page.navigate(url, new Page.NavigateOptions()
@@ -59,14 +61,18 @@ public class PlaywrightFetcher {
             String html = page.content();
             String hash = SiteFetcher.computeHash(html);
 
-            page.close();
-            context.close();
-
             log.info("PlaywrightFetcher: fetched {} ({} chars)", url, html.length());
             return Optional.of(new SiteFetcher.FetchResult(html, hash, url));
         } catch (Exception e) {
             log.error("PlaywrightFetcher: failed to fetch {}: {}", url, e.getMessage());
             return Optional.empty();
+        } finally {
+            if (page != null) {
+                try { page.close(); } catch (Exception ignored) {}
+            }
+            if (context != null) {
+                try { context.close(); } catch (Exception ignored) {}
+            }
         }
     }
 
