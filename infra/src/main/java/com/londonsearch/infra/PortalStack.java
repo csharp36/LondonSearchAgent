@@ -8,9 +8,11 @@ import software.amazon.awscdk.services.ec2.SubnetSelection;
 import software.amazon.awscdk.services.ec2.SubnetType;
 import software.amazon.awscdk.services.ec2.Vpc;
 import software.amazon.awscdk.services.ecs.Cluster;
+import software.amazon.awscdk.services.ecs.AssetImageProps;
 import software.amazon.awscdk.services.ecs.ContainerImage;
 import software.amazon.awscdk.services.ecs.patterns.ApplicationLoadBalancedFargateService;
 import software.amazon.awscdk.services.ecs.patterns.ApplicationLoadBalancedTaskImageOptions;
+import software.amazon.awscdk.services.ecr.assets.Platform;
 import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.s3.Bucket;
 import software.constructs.Construct;
@@ -38,7 +40,10 @@ public class PortalStack extends Stack {
                         .memoryLimitMiB(2048)
                         .desiredCount(1)
                         .taskImageOptions(ApplicationLoadBalancedTaskImageOptions.builder()
-                                .image(ContainerImage.fromAsset("../app"))
+                                .image(ContainerImage.fromAsset("../app", AssetImageProps.builder()
+                                        .platform(Platform.LINUX_AMD64)
+                                        .cacheDisabled(true)
+                                        .build()))
                                 .containerPort(8080)
                                 .environment(new HashMap<>(Map.of(
                                         "SPRING_PROFILES_ACTIVE", "prod",
