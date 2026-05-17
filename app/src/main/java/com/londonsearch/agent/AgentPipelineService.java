@@ -40,6 +40,7 @@ public class AgentPipelineService {
     private final SmartLinkService smartLinkService;
     private final String alertEmailTo;
     private final CostGuard costGuard;
+    private final ImageValidator imageValidator;
     private final ImageEnricher imageEnricher;
     private final PlaywrightFetcher playwrightFetcher;
 
@@ -57,6 +58,7 @@ public class AgentPipelineService {
                                  SmartLinkService smartLinkService,
                                  @Value("${app.alert.email-to}") String alertEmailTo,
                                  CostGuard costGuard,
+                                 ImageValidator imageValidator,
                                  ImageEnricher imageEnricher,
                                  PlaywrightFetcher playwrightFetcher) {
         this.siteFetcher = siteFetcher;
@@ -73,6 +75,7 @@ public class AgentPipelineService {
         this.smartLinkService = smartLinkService;
         this.alertEmailTo = alertEmailTo;
         this.costGuard = costGuard;
+        this.imageValidator = imageValidator;
         this.imageEnricher = imageEnricher;
         this.playwrightFetcher = playwrightFetcher;
     }
@@ -152,6 +155,9 @@ public class AgentPipelineService {
             if (lastHash != null) updateSiteHash(site, lastHash);
             return new SiteResult(urls.isEmpty(), new PipelineResult(0, 0, List.of()));
         }
+
+        // Validate image URLs — strip hallucinated/broken ones so enricher can fill in real ones
+        allExtracted = imageValidator.validate(allExtracted);
 
         // Enrich listings that have no images by fetching og:image from their listing pages
         allExtracted = imageEnricher.enrich(allExtracted);

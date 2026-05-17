@@ -82,6 +82,27 @@ public class ImageEnricher {
                 }
             }
 
+            // Last resort: look for large property images in the page HTML
+            if (images.isEmpty()) {
+                for (Element img : doc.select("img[src]")) {
+                    String src = img.attr("abs:src");
+                    if (src.isBlank()) continue;
+                    // Skip tiny images, icons, logos, tracking pixels
+                    String lower = src.toLowerCase();
+                    if (lower.contains("logo") || lower.contains("favicon") || lower.contains("icon")
+                            || lower.contains("pixel") || lower.contains("spacer") || lower.contains("avatar")
+                            || lower.contains("agent") || lower.contains("sprite") || lower.endsWith(".svg")) {
+                        continue;
+                    }
+                    // Prefer images with property-related path segments
+                    if (lower.contains("property") || lower.contains("photo") || lower.contains("image")
+                            || lower.contains("listing") || lower.contains("gallery")) {
+                        images.add(src);
+                        if (images.size() >= 3) break;
+                    }
+                }
+            }
+
             return images;
         } catch (Exception e) {
             log.debug("Failed to fetch og:image from {}: {}", url, e.getMessage());
