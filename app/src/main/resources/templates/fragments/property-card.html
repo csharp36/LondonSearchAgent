@@ -7,8 +7,8 @@
 
     <!-- Property image or placeholder -->
     <div class="relative h-48 bg-gradient-to-br from-slate-700 to-slate-600 flex items-center justify-center overflow-hidden">
-        <!-- Show actual image if available -->
-        <img th:if="${imageUrl != null}" th:src="${imageUrl}" alt="Property photo"
+        <!-- Show actual image if available (proxied to bypass hotlink protection) -->
+        <img th:if="${imageUrl != null}" th:src="@{/api/image(url=${imageUrl})}" alt="Property photo"
              class="w-full h-full object-cover" loading="lazy"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
         <!-- Fallback: show address prominently when no image -->

@@ -53,17 +53,17 @@
     <div th:if="${!images.isEmpty()}" class="grid grid-cols-3 gap-2 h-64 mb-6 rounded-xl overflow-hidden">
         <!-- Main photo -->
         <div class="col-span-2 bg-gradient-to-br from-slate-700 to-slate-600">
-            <img th:src="${images[0]}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
+            <img th:src="@{/api/image(url=${images[0]})}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
                  onerror="this.parentElement.classList.add('flex','items-center','justify-center'); this.style.display='none';">
         </div>
         <!-- Right column -->
         <div class="flex flex-col gap-2">
             <div class="flex-1 bg-gradient-to-br from-slate-600 to-slate-700 overflow-hidden">
-                <img th:if="${images.size() > 1}" th:src="${images[1]}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
+                <img th:if="${images.size() > 1}" th:src="@{/api/image(url=${images[1]})}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
                      onerror="this.style.display='none';">
             </div>
             <div class="flex-1 bg-gradient-to-br from-slate-700 to-slate-600 overflow-hidden">
-                <img th:if="${images.size() > 2}" th:src="${images[2]}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
+                <img th:if="${images.size() > 2}" th:src="@{/api/image(url=${images[2]})}" alt="Property photo" class="w-full h-full object-cover" loading="lazy"
                      onerror="this.style.display='none';">
             </div>
         </div>
@@ -96,10 +96,6 @@
             <span class="text-xs text-slate-400 block mb-0.5">Size</span>
             <span class="text-slate-100 font-semibold"
                   th:text="${#numbers.formatInteger(property.sqft, 1, 'COMMA')} + ' sqft'">0 sqft</span>
-        </div>
-        <div th:if="${property.availableFrom != null}">
-            <span class="text-xs text-slate-400 block mb-0.5">Available From</span>
-            <span class="text-slate-100 font-semibold" th:text="${property.availableFrom}">-</span>
         </div>
         <div th:if="${property.furnishing != null}">
             <span class="text-xs text-slate-400 block mb-0.5">Furnishing</span>

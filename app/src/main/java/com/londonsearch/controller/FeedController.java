@@ -121,23 +121,44 @@ public class FeedController {
             }
         }
 
-        // Calculate area counts from the properties already loaded
-        List<Property> allProperties = propertyRepository.findAll();
+        // Calculate area counts from the filtered properties (with listings, in price range)
+        // Use allFiltered = all properties with listings and in price range (no area/status filter)
+        List<Property> allFromDb = propertyRepository.findAll();
+        List<Property> allFiltered = allFromDb.stream()
+                .filter(p -> listingCounts.containsKey(p.getId())
+                        ? listingCounts.get(p.getId()) > 0
+                        : listingRepository.findByPropertyId(p.getId()).size() > 0)
+                .toList();
+        if (activeConfig != null) {
+            Integer min = activeConfig.getMinPrice();
+            Integer max = activeConfig.getMaxPrice();
+            if (min != null || max != null) {
+                allFiltered = allFiltered.stream()
+                        .filter(p -> {
+                            Integer price = p.getPricePerMonth();
+                            if (price == null) return true;
+                            if (min != null && price < min) return false;
+                            if (max != null && price > max) return false;
+                            return true;
+                        })
+                        .toList();
+            }
+        }
+
         Map<String, Integer> areaCounts = new HashMap<>();
-        for (Property p : allProperties) {
+        for (Property p : allFiltered) {
             String propArea = p.getArea();
             if (propArea != null) {
                 areaCounts.merge(propArea, 1, Integer::sum);
             }
         }
-        // Ensure all target areas have an entry
         for (String a : AREAS) {
             areaCounts.putIfAbsent(a, 0);
         }
 
-        int newCount = (int) allProperties.stream().filter(p -> "new".equals(p.getStatus())).count();
-        int savedCount = (int) allProperties.stream().filter(p -> "saved".equals(p.getStatus())).count();
-        int totalCount = allProperties.size();
+        int newCount = (int) allFiltered.stream().filter(p -> "new".equals(p.getStatus())).count();
+        int savedCount = (int) allFiltered.stream().filter(p -> "saved".equals(p.getStatus())).count();
+        int totalCount = allFiltered.size();
 
         model.addAttribute("properties", properties);
         model.addAttribute("listingCounts", listingCounts);

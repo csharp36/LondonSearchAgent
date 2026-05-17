@@ -270,7 +270,7 @@ public class AgentPipelineService {
         prop.setPropertyType(ep.propertyType());
         prop.setFurnishing(ep.furnishing());
         prop.setDescription(ep.description());
-        prop.setAvailableFrom(ep.availableFrom());
+        prop.setAvailableFrom(normalizer.normalizeDate(ep.availableFrom()));
         prop.setStatus("new");
         prop.setFirstSeenAt(Instant.now());
         prop.setLastUpdatedAt(Instant.now());
@@ -295,13 +295,33 @@ public class AgentPipelineService {
         listing.setOriginalPrice(ep.price());
         listing.setOriginalAddress(ep.address());
         listing.setListingUrl(ep.listingUrl());
-        listing.setImageUrls(ep.imageUrls() != null ? ep.imageUrls() : List.of());
+        listing.setImageUrls(sanitizeImageUrls(ep.imageUrls(), siteBaseUrl));
         listing.setFloorPlanUrl(ep.floorPlanUrl());
         listing.setAgentName(ep.agentName());
         listing.setAgentPhone(ep.agentPhone());
         listing.setAgentEmail(ep.agentEmail());
         listing.setScrapedAt(Instant.now());
         listingRepo.save(listing);
+    }
+
+    /** Filters out malformed, duplicate-base-URL, and obviously hallucinated image URLs. */
+    private List<String> sanitizeImageUrls(List<String> urls, String siteBaseUrl) {
+        if (urls == null || urls.isEmpty()) return List.of();
+        return urls.stream()
+                .filter(url -> url != null && url.startsWith("http"))
+                // Fix double-base-URL: "https://site.com//other-cdn.com/path" → "https://other-cdn.com/path"
+                .map(url -> {
+                    if (siteBaseUrl != null && url.startsWith(siteBaseUrl + "/") && url.indexOf("//", siteBaseUrl.length()) > 0) {
+                        String afterBase = url.substring(siteBaseUrl.length() + 1);
+                        if (afterBase.contains(".") && !afterBase.startsWith("/")) {
+                            return "https://" + afterBase;
+                        }
+                    }
+                    return url;
+                })
+                // Filter out tiny placeholder/icon URLs
+                .filter(url -> !url.contains("/1x1") && !url.contains("pixel") && !url.contains("spacer"))
+                .toList();
     }
 
     private void scoreAndAssess(Property property) {

@@ -2,6 +2,9 @@ package com.londonsearch.agent;
 
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -87,6 +90,52 @@ public class PropertyNormalizer {
         // Very short addresses (< 10 chars) are almost certainly garbage
         if (address.strip().length() < 10) return true;
         return false;
+    }
+
+    /**
+     * Normalizes date strings from UK estate agent sites to ISO format (yyyy-MM-dd).
+     * Handles DD/MM/YYYY, DD-MM-YYYY, DD.MM.YYYY, and ISO format.
+     * Returns the original string for non-date values like "Available now".
+     */
+    public String normalizeDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) return null;
+        String trimmed = dateStr.strip();
+
+        // Already ISO format
+        if (trimmed.matches("\\d{4}-\\d{2}-\\d{2}")) return trimmed;
+
+        // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY (British format)
+        Matcher m = Pattern.compile("(\\d{1,2})[/\\-.](\\d{1,2})[/\\-.](\\d{4})").matcher(trimmed);
+        if (m.find()) {
+            int first = Integer.parseInt(m.group(1));
+            int second = Integer.parseInt(m.group(2));
+            int year = Integer.parseInt(m.group(3));
+            // UK format: DD/MM/YYYY — day first, month second
+            int day = first;
+            int month = second;
+            // Sanity check: if month > 12, swap (might be MM/DD/YYYY)
+            if (month > 12 && day <= 12) {
+                month = first;
+                day = second;
+            }
+            try {
+                return LocalDate.of(year, month, day).format(DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (Exception e) {
+                return trimmed;
+            }
+        }
+
+        // Try parsing common text formats like "1 July 2026" or "1st July 2026"
+        String cleaned = trimmed.replaceAll("(\\d+)(st|nd|rd|th)", "$1");
+        for (String pattern : List.of("d MMMM yyyy", "d MMM yyyy", "MMMM d yyyy", "MMM d yyyy")) {
+            try {
+                LocalDate date = LocalDate.parse(cleaned, DateTimeFormatter.ofPattern(pattern, java.util.Locale.UK));
+                return date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (DateTimeParseException ignored) {}
+        }
+
+        // Non-date string like "Available now" — return as-is
+        return trimmed;
     }
 
     public Integer parseInteger(String value) {

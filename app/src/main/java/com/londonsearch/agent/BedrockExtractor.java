@@ -48,7 +48,7 @@ public class BedrockExtractor implements PropertyExtractor {
               Make URLs absolute (prepend the site's base URL if they start with "/").
               Exclude tiny icons, logos, agent photos, and SVG placeholders — only include actual property photographs.
             - floorPlanUrl: URL of floor plan image, or null
-            - availableFrom: availability date as shown (e.g., "Available now", "01/07/2026"), or null
+            - availableFrom: availability date in YYYY-MM-DD format (e.g., "2026-07-01"), or "Available now" if immediate, or null if not specified. Convert any DD/MM/YYYY dates to YYYY-MM-DD.
             - agentName: name of the letting agent, or null
             - agentPhone: phone number of the agent, or null
             - agentEmail: email of the agent, or null
