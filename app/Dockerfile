@@ -1,9 +1,7 @@
-FROM --platform=linux/amd64 eclipse-temurin:21-jre-bookworm AS runtime
+FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy AS runtime
 
-# Install Chromium and dependencies for Playwright
-# Debian Bookworm has a real chromium binary (not a snap wrapper like Ubuntu)
+# Install system dependencies required by Playwright's bundled Chromium
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    chromium \
     fonts-freefont-ttf \
     libnss3 \
     libatk1.0-0 \
@@ -19,11 +17,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libasound2 \
     libxshmfence1 \
+    libdbus-1-3 \
+    libx11-xcb1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Tell Playwright to use system Chromium instead of downloading its own
-ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
-ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+# Let Playwright download and manage its own Chromium (compatible version)
+# System chromium-browser on Ubuntu is a snap wrapper that doesn't work in Docker
 
 WORKDIR /app
 
