@@ -26,14 +26,18 @@ public class BedrockExtractor implements PropertyExtractor {
             You are a property listing data extractor. Extract ALL rental property listings from the following HTML content.
 
             CRITICAL RULES:
-            - Only extract REAL listings that appear on the page. Never invent, guess, or hallucinate data.
-            - If a field is not present in the HTML, use null — do NOT make up values.
-            - Addresses must be real London addresses from the HTML. Never output placeholder addresses like "123 Main Street", "456 High Street", "123 Fake Street", or similar generic addresses.
+            - Only extract REAL listings that actually appear in the HTML. NEVER invent, guess, or hallucinate any data.
+            - Every field you output MUST come directly from text in the HTML. If you cannot find a value, use null.
+            - Addresses MUST be copied exactly from the HTML — never generate addresses. If the page shows "Flat 3, 22 Wimpole Street, W1G 8GQ" then output exactly that.
+            - NEVER use sequential numbers like 123, 456, 789 in addresses — these are a sign of hallucination.
+            - NEVER invent street names. If you cannot find the address in the HTML, skip that listing entirely.
+            - Listing URLs MUST be real href links found in the HTML, not constructed/guessed URLs.
             - If the HTML has no actual property listings (e.g. it's a homepage, error page, or search form), return [].
+            - When in doubt, return fewer results rather than risk hallucinating data. An empty array [] is always acceptable.
 
             For each property listing found, extract these fields:
-            - address: the exact full street address including postcode as shown in the HTML
-            - price: the rental price exactly as shown (e.g., "£7,500 pcm" or "£1,730 pw")
+            - address: the EXACT full street address including postcode as shown in the HTML (copy it verbatim)
+            - price: the rental price EXACTLY as shown (e.g., "£7,500 pcm" or "£1,730 pw")
             - bedrooms: number of bedrooms as a string
             - bathrooms: number of bathrooms as a string (use "0" if not specified)
             - sqft: square footage as a string (use null if not specified)

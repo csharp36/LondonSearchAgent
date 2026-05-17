@@ -17,14 +17,15 @@ public class PropertyNormalizer {
 
     /** Patterns that indicate a hallucinated or placeholder address from AI extraction. */
     private static final List<Pattern> FAKE_ADDRESS_PATTERNS = List.of(
-            Pattern.compile("\\b123\\s+(fake|main|test|sample|example)\\b", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("\\b456\\s+(fake|main|test|sample|example|high)\\b", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("\\b789\\s+(fake|main|test|sample|example)\\b", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("\\bfake\\s+street\\b", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("\\bsample\\s+(street|road|avenue|lane)\\b", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("\\bexample\\s+(street|road|avenue|lane)\\b", Pattern.CASE_INSENSITIVE),
+            // Sequential round numbers (123, 456, 789) are a strong hallucination signal
+            Pattern.compile("^(123|456|789)\\s+", Pattern.CASE_INSENSITIVE),
+            // Generic/fake street names
+            Pattern.compile("\\b(fake|sample|example|real|test)\\s+(street|road|avenue|lane|place|way)\\b", Pattern.CASE_INSENSITIVE),
             Pattern.compile("\\b(tbd|tba|n/?a|unknown|placeholder)\\b", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("^https?://", Pattern.CASE_INSENSITIVE)  // URLs used as addresses
+            // URLs used as addresses
+            Pattern.compile("^https?://", Pattern.CASE_INSENSITIVE),
+            // Numeric-only addresses (Foxtons property IDs like "5267199, SW7")
+            Pattern.compile("^\\d{6,},", Pattern.CASE_INSENSITIVE)
     );
 
     private static final Map<String, String> POSTCODE_AREA_MAP = Map.ofEntries(
