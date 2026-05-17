@@ -162,7 +162,18 @@
                 <script th:inline="javascript">
                     (function() {
                         var address = /*[[${property.address}]]*/ '';
-                        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(address + ', London, UK') + '&format=json&limit=1')
+                        var area = /*[[${property.area}]]*/ '';
+                        // Clean address for geocoding: strip postcodes, numbers after postcodes, commas
+                        var cleanAddr = address
+                            .replace(/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/gi, '') // full postcode
+                            .replace(/\b[A-Z]{1,2}\d[A-Z\d]?\b/gi, '')              // partial postcode
+                            .replace(/\d{5,}/g, '')                                   // long numbers (property IDs)
+                            .replace(/,\s*,/g, ',')                                   // double commas
+                            .replace(/^\s*,|,\s*$/g, '')                              // leading/trailing commas
+                            .trim();
+                        // If cleaned address is too short, fall back to area
+                        var query = cleanAddr.length > 5 ? cleanAddr + ', London, UK' : area + ', London, UK';
+                        fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(query) + '&format=json&limit=1')
                             .then(function(r) { return r.json(); })
                             .then(function(data) {
                                 if (data.length > 0) {

@@ -311,9 +311,12 @@ public class AgentPipelineService {
                 .filter(url -> url != null && url.startsWith("http"))
                 // Fix double-base-URL: "https://site.com//other-cdn.com/path" → "https://other-cdn.com/path"
                 .map(url -> {
-                    if (siteBaseUrl != null && url.startsWith(siteBaseUrl + "/") && url.indexOf("//", siteBaseUrl.length()) > 0) {
-                        String afterBase = url.substring(siteBaseUrl.length() + 1);
-                        if (afterBase.contains(".") && !afterBase.startsWith("/")) {
+                    if (siteBaseUrl != null && url.startsWith(siteBaseUrl)) {
+                        String afterBase = url.substring(siteBaseUrl.length()).replaceFirst("^/+", "");
+                        // If what remains looks like another domain (contains a dot before any slash), fix it
+                        int slashIdx = afterBase.indexOf('/');
+                        String firstPart = slashIdx > 0 ? afterBase.substring(0, slashIdx) : afterBase;
+                        if (firstPart.contains(".") && firstPart.contains("-")) {
                             return "https://" + afterBase;
                         }
                     }

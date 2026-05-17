@@ -25,7 +25,11 @@ public class PropertyNormalizer {
             // URLs used as addresses
             Pattern.compile("^https?://", Pattern.CASE_INSENSITIVE),
             // Numeric-only addresses (Foxtons property IDs like "5267199, SW7")
-            Pattern.compile("^\\d{6,},", Pattern.CASE_INSENSITIVE)
+            Pattern.compile("^\\d{6,}", Pattern.CASE_INSENSITIVE),
+            // Postcode + long number (Foxtons IDs embedded: "W1K 7894631")
+            Pattern.compile("\\b[A-Z]{1,2}\\d[A-Z\\d]?\\s*\\d{5,}\\b", Pattern.CASE_INSENSITIVE),
+            // Address is just a postcode with no street (e.g. "SW7 3AA" or "W1K, London")
+            Pattern.compile("^[A-Z]{1,2}\\d[A-Z\\d]?\\s*\\d?[A-Z]{0,2}\\s*[,.]?\\s*(london)?$", Pattern.CASE_INSENSITIVE)
     );
 
     private static final Map<String, String> POSTCODE_AREA_MAP = Map.ofEntries(
