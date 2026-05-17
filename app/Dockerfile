@@ -1,13 +1,24 @@
-FROM --platform=linux/amd64 eclipse-temurin:21-jre-alpine AS runtime
+FROM --platform=linux/amd64 eclipse-temurin:21-jre-jammy AS runtime
 
 # Install Chromium and dependencies for Playwright
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    freetype \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    chromium-browser \
+    fonts-freefont-ttf \
+    libnss3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libasound2 \
+    libxshmfence1 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Tell Playwright to use system Chromium instead of downloading its own
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
