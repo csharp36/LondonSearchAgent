@@ -16,7 +16,7 @@ public class NetworkStack extends Stack {
 
         this.vpc = Vpc.Builder.create(this, "Vpc")
                 .maxAzs(2)
-                .natGateways(0)
+                .natGateways(1)
                 .gatewayEndpoints(Map.of(
                         "S3", GatewayVpcEndpointOptions.builder()
                                 .service(GatewayVpcEndpointAwsService.S3)
@@ -35,6 +35,9 @@ public class NetworkStack extends Stack {
                 .build());
         vpc.addInterfaceEndpoint("CloudWatchLogs", InterfaceVpcEndpointOptions.builder()
                 .service(InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS)
+                .build());
+        vpc.addInterfaceEndpoint("Bedrock", InterfaceVpcEndpointOptions.builder()
+                .service(InterfaceVpcEndpointAwsService.BEDROCK_RUNTIME)
                 .build());
     }
 
