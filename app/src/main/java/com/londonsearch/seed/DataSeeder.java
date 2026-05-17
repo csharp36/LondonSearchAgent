@@ -45,16 +45,12 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Always seed configs and sites (idempotent by ID)
+        // Always upsert configs and sites (idempotent by ID via DynamoDB put)
         // Skip fake properties — real data comes from the pipeline
-        if (searchConfigRepository.findAll().isEmpty()) {
-            log.info("Seeding search configs and monitored sites...");
-            seedSearchConfigs();
-            seedMonitoredSites();
-            log.info("Search configs and monitored sites seeded.");
-        } else {
-            log.info("Configs already exist, skipping seed.");
-        }
+        log.info("Seeding search configs and monitored sites...");
+        seedSearchConfigs();
+        seedMonitoredSites();
+        log.info("Search configs and monitored sites seeded.");
     }
 
     private void seedProperties() {
@@ -311,15 +307,15 @@ public class DataSeeder implements CommandLineRunner {
     private void seedMonitoredSites() {
         // Aggregators
         saveMonitoredSite("site-rightmove", "Rightmove", "https://www.rightmove.co.uk",
-                "https://www.rightmove.co.uk/property-to-rent/find.html?locationIdentifier=REGION%5E87490&minBedrooms=2&maxBedrooms=3&minPrice=5000&maxPrice=9000&propertyTypes=flat&channel=RENT",
-                "js-rendered", true, "aggregator");
+                "https://www.rightmove.co.uk/property-to-rent/find.html?locationIdentifier=REGION%5E{rightmoveCode}&minBedrooms={minBeds}&maxBedrooms={maxBeds}&minPrice={minPrice}&maxPrice={maxPrice}&propertyTypes=flat&channel=RENT",
+                "http", true, "aggregator");
 
         saveMonitoredSite("site-onthemarket", "OnTheMarket", "https://www.onthemarket.com",
-                "https://www.onthemarket.com/to-rent/2-bed-property/london/?min-price=5000&max-price=9000",
+                "https://www.onthemarket.com/to-rent/property/{area}/?min-price={minPrice}&max-price={maxPrice}&min-bedrooms={minBeds}&max-bedrooms={maxBeds}",
                 "http", true, "aggregator");
 
         saveMonitoredSite("site-zoopla", "Zoopla", "https://www.zoopla.co.uk",
-                "https://www.zoopla.co.uk/to-rent/property/2-bedrooms/london/?price_min=5000&price_max=9000",
+                "https://www.zoopla.co.uk/to-rent/property/{area}/?price_min={minPrice}&price_max={maxPrice}&beds_min={minBeds}&beds_max={maxBeds}",
                 "js-rendered", true, "aggregator");
 
         // Tier 1
@@ -328,43 +324,43 @@ public class DataSeeder implements CommandLineRunner {
                 "http", true, "tier1");
 
         saveMonitoredSite("site-savills", "Savills", "https://www.savills.co.uk",
-                "https://search.savills.com/list?SearchList=Id_51730+Category_TownVillageCity&Tenure=GRS_T_R&SortOrder=SO_PCDD&MinPrice=5000&MaxPrice=9000&MinBedrooms=2&MaxBedrooms=3&Category=GRS_CAT_RES&Currency=GBP&Period=Month",
-                "js-rendered", true, "tier1");
+                "https://search.savills.com/list?SearchList=Id_51730+Category_TownVillageCity&Tenure=GRS_T_R&SortOrder=SO_PCDD&MinPrice={minPrice}&MaxPrice={maxPrice}&MinBedrooms={minBeds}&MaxBedrooms={maxBeds}&Category=GRS_CAT_RES&Currency=GBP&Period=Month",
+                "http", true, "tier1");
 
         saveMonitoredSite("site-foxtons", "Foxtons", "https://www.foxtons.co.uk",
-                "https://www.foxtons.co.uk/properties-to-rent/london/2-bedrooms",
-                "js-rendered", true, "tier1");
+                "https://www.foxtons.co.uk/properties-to-rent/{area}/{minBeds}-bedrooms",
+                "http", true, "tier1");
 
         saveMonitoredSite("site-chestertons", "Chestertons", "https://www.chestertons.co.uk",
-                "https://www.chestertons.co.uk/london/{area}/lettings",
+                "https://www.chestertons.co.uk/en-gb/properties/to-let/{area}?bedrooms={minBeds}-{maxBeds}&price={minPrice}-{maxPrice}",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-strutt-parker", "Strutt & Parker", "https://www.struttandparker.com",
-                "https://www.struttandparker.com/properties/residential/to-let/london",
+                "https://www.struttandparker.com/properties/to-let/london/{area}?minBedrooms={minBeds}&maxBedrooms={maxBeds}&minPrice={minPrice}&maxPrice={maxPrice}",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-jll", "JLL Residential", "https://www.jll.co.uk",
                 "https://residential.jll.co.uk/properties-to-rent/london",
-                "http", true, "tier1");
+                "http", false, "tier1");
 
         saveMonitoredSite("site-marsh-parsons", "Marsh & Parsons", "https://www.marshandparsons.co.uk",
                 "https://www.marshandparsons.co.uk/properties-to-rent/london/mayfair/",
-                "http", true, "tier1");
+                "http", false, "tier1");
 
         saveMonitoredSite("site-hamptons", "Hamptons", "https://www.hamptons.co.uk",
-                "https://www.hamptons.co.uk/properties/to-let/london",
+                "https://www.hamptons.co.uk/london/{area}/lettings/from-{minBeds}-bed",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-winkworth", "Winkworth", "https://www.winkworth.co.uk",
-                "https://www.winkworth.co.uk/properties/to-let/london",
+                "https://www.winkworth.co.uk/london/{area}/properties-to-let",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-dexters", "Dexters", "https://www.dexters.co.uk",
-                "https://www.dexters.co.uk/property-lettings/properties-to-rent-in-{area}",
+                "https://www.dexters.co.uk/property-lettings/properties-to-let-in-{area}",
                 "http", true, "tier1");
 
         saveMonitoredSite("site-benham-reeves", "Benham & Reeves", "https://www.benhams.com",
-                "https://www.benhams.com/properties-to-rent/london",
+                "https://www.benhams.com/{area}/{minBeds}-bed/",
                 "http", true, "tier1");
 
         // Tier 2
@@ -378,15 +374,15 @@ public class DataSeeder implements CommandLineRunner {
 
         saveMonitoredSite("site-quintessentially", "Quintessentially Estates", "https://quintessentiallyestates.com",
                 "https://quintessentiallyestates.com/lettings-agents-london/",
-                "http", true, "tier2");
+                "http", false, "tier2");
 
         saveMonitoredSite("site-hudsons", "Hudsons Property", "https://www.hudsonsproperty.com",
-                "https://www.hudsonsproperty.com/property-lettings/",
+                "https://www.hudsonsproperty.com/{area}-apartments/",
                 "http", true, "tier2");
 
         saveMonitoredSite("site-carter-jonas", "Carter Jonas", "https://www.carterjonas.co.uk",
-                "https://www.carterjonas.co.uk/properties/residential/to-let/london",
-                "http", true, "tier2");
+                "https://www.carterjonas.co.uk/houses/to-rent/{area}",
+                "js-rendered", true, "tier2");
 
         log.info("Seeded 19 monitored sites");
     }

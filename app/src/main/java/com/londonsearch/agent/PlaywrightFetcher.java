@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PreDestroy;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,7 +27,8 @@ public class PlaywrightFetcher {
                 playwright = Playwright.create();
             }
             BrowserType.LaunchOptions options = new BrowserType.LaunchOptions()
-                    .setHeadless(true);
+                    .setHeadless(true)
+                    .setArgs(List.of("--no-sandbox", "--disable-setuid-sandbox"));
             // Use system Chromium in Docker/Alpine (set via PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)
             String systemChromium = System.getenv("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH");
             if (systemChromium != null && !systemChromium.isBlank()) {
