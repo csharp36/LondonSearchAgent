@@ -52,7 +52,7 @@ public class ImageEnricher {
         return ep.imageUrls() != null && !ep.imageUrls().isEmpty();
     }
 
-    private List<String> fetchOgImages(String url) {
+    List<String> fetchOgImages(String url) {
         try {
             Document doc = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
