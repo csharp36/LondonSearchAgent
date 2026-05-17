@@ -79,11 +79,12 @@ public class PortalStack extends Stack {
         imagesBucket.grantReadWrite(service.getTaskDefinition().getTaskRole());
 
         // Grant Bedrock access for Nova Micro (extraction) and Claude Sonnet (AI assessment)
+        // Wildcard region because Bedrock may route cross-region (e.g. Sonnet → us-east-2)
         service.getTaskDefinition().getTaskRole().addToPrincipalPolicy(PolicyStatement.Builder.create()
-                .actions(List.of("bedrock:InvokeModel"))
+                .actions(List.of("bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"))
                 .resources(List.of(
-                        "arn:aws:bedrock:us-east-1::foundation-model/*",
-                        "arn:aws:bedrock:us-east-1:710703498172:inference-profile/*"
+                        "arn:aws:bedrock:*::foundation-model/*",
+                        "arn:aws:bedrock:*:710703498172:inference-profile/*"
                 ))
                 .build());
 
