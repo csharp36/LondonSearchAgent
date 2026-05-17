@@ -81,7 +81,10 @@ public class PortalStack extends Stack {
         // Grant Bedrock access for Nova Micro (extraction) and Claude Sonnet (AI assessment)
         service.getTaskDefinition().getTaskRole().addToPrincipalPolicy(PolicyStatement.Builder.create()
                 .actions(List.of("bedrock:InvokeModel"))
-                .resources(List.of("arn:aws:bedrock:us-east-1::foundation-model/*"))
+                .resources(List.of(
+                        "arn:aws:bedrock:us-east-1::foundation-model/*",
+                        "arn:aws:bedrock:us-east-1:710703498172:inference-profile/*"
+                ))
                 .build());
 
         CfnOutput.Builder.create(this, "PortalUrl")
