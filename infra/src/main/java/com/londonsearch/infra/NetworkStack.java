@@ -16,7 +16,7 @@ public class NetworkStack extends Stack {
 
         this.vpc = Vpc.Builder.create(this, "Vpc")
                 .maxAzs(2)
-                .natGateways(1)
+                .natGateways(0)
                 .gatewayEndpoints(Map.of(
                         "S3", GatewayVpcEndpointOptions.builder()
                                 .service(GatewayVpcEndpointAwsService.S3)
@@ -36,9 +36,7 @@ public class NetworkStack extends Stack {
         vpc.addInterfaceEndpoint("CloudWatchLogs", InterfaceVpcEndpointOptions.builder()
                 .service(InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS)
                 .build());
-        vpc.addInterfaceEndpoint("Bedrock", InterfaceVpcEndpointOptions.builder()
-                .service(InterfaceVpcEndpointAwsService.BEDROCK_RUNTIME)
-                .build());
+        // Bedrock calls go via public internet (task has public IP)
     }
 
     public Vpc getVpc() {

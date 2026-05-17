@@ -4,6 +4,8 @@ import software.amazon.awscdk.CfnOutput;
 import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
 import software.amazon.awscdk.services.dynamodb.TableV2;
+import software.amazon.awscdk.services.ec2.SubnetSelection;
+import software.amazon.awscdk.services.ec2.SubnetType;
 import software.amazon.awscdk.services.ec2.Vpc;
 import software.amazon.awscdk.services.ecs.Cluster;
 import software.amazon.awscdk.services.ecs.ContainerImage;
@@ -53,6 +55,10 @@ public class PortalStack extends Stack {
                                 )))
                                 .build())
                         .publicLoadBalancer(true)
+                        .assignPublicIp(true)
+                        .taskSubnets(SubnetSelection.builder()
+                                .subnetType(SubnetType.PUBLIC)
+                                .build())
                         .build();
 
         // Increase task memory for Playwright/Chromium
