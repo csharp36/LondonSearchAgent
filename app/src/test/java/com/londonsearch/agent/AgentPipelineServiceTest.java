@@ -55,7 +55,7 @@ class AgentPipelineServiceTest {
         );
 
         AgentPipelineService.PipelineResult result =
-                pipelineService.processExtractedProperties(extracted, "TestSite", "https://example.com");
+                pipelineService.processExtractedProperties(extracted, "TestSite", "https://example.com", "llm-fallback");
 
         assertThat(result.newProperties()).isEqualTo(1);
         assertThat(result.updatedProperties()).isEqualTo(0);
@@ -81,11 +81,11 @@ class AgentPipelineServiceTest {
         );
 
         AgentPipelineService.PipelineResult result1 =
-                pipelineService.processExtractedProperties(extracted, "SiteA", "https://sitea.com");
+                pipelineService.processExtractedProperties(extracted, "SiteA", "https://sitea.com", "llm-fallback");
         assertThat(result1.newProperties()).isEqualTo(1);
 
         AgentPipelineService.PipelineResult result2 =
-                pipelineService.processExtractedProperties(extracted, "SiteB", "https://siteb.com");
+                pipelineService.processExtractedProperties(extracted, "SiteB", "https://siteb.com", "llm-fallback");
         assertThat(result2.newProperties()).isEqualTo(0);
         assertThat(result2.updatedProperties()).isEqualTo(1);
     }

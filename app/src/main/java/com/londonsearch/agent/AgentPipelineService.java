@@ -12,6 +12,7 @@ import com.londonsearch.repository.PropertyRepository;
 import com.londonsearch.repository.SearchConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +45,8 @@ public class AgentPipelineService {
     private final ImageValidator imageValidator;
     private final ImageEnricher imageEnricher;
     private final PlaywrightFetcher playwrightFetcher;
+    private final CssSelectorExtractor cssSelectorExtractor;
+    private final SelectorGeneratorService selectorGeneratorService; // nullable in mock mode
 
     public AgentPipelineService(SiteFetcher siteFetcher,
                                  PropertyExtractor extractor,
@@ -61,7 +64,9 @@ public class AgentPipelineService {
                                  CostGuard costGuard,
                                  ImageValidator imageValidator,
                                  ImageEnricher imageEnricher,
-                                 PlaywrightFetcher playwrightFetcher) {
+                                 PlaywrightFetcher playwrightFetcher,
+                                 CssSelectorExtractor cssSelectorExtractor,
+                                 @Autowired(required = false) SelectorGeneratorService selectorGeneratorService) {
         this.siteFetcher = siteFetcher;
         this.extractor = extractor;
         this.normalizer = normalizer;
@@ -79,6 +84,8 @@ public class AgentPipelineService {
         this.imageValidator = imageValidator;
         this.imageEnricher = imageEnricher;
         this.playwrightFetcher = playwrightFetcher;
+        this.cssSelectorExtractor = cssSelectorExtractor;
+        this.selectorGeneratorService = selectorGeneratorService;
     }
 
     public RunResult runFullPipeline() {
@@ -138,6 +145,8 @@ public class AgentPipelineService {
         List<ExtractedProperty> allExtracted = new ArrayList<>();
         String lastHash = null;
 
+        String extractionMethod = "llm-fallback";
+
         for (String url : urls) {
             Optional<SiteFetcher.FetchResult> fetchResult = usePlaywright
                     ? playwrightFetcher.fetch(url)
@@ -147,13 +156,13 @@ public class AgentPipelineService {
             SiteFetcher.FetchResult result = fetchResult.get();
             lastHash = result.hash();
 
-            // Strip boilerplate HTML (scripts, styles, SVGs) to fit more listing data within the LLM's truncation window
             String strippedHtml = SiteFetcher.stripBoilerplate(result.html());
-            List<ExtractedProperty> extracted = extractor.extract(strippedHtml, site.getName());
-            log.info("{}: extracted {} properties from {} (raw {}KB → stripped {}KB)",
-                    site.getName(), extracted.size(), url,
-                    result.html().length() / 1024, strippedHtml.length() / 1024);
-            allExtracted.addAll(extracted);
+            ExtractionResult extraction = extractWithStrategy(result.html(), strippedHtml, site);
+            extractionMethod = extraction.method();
+            log.info("{}: extracted {} properties via {} from {} (raw {}KB)",
+                    site.getName(), extraction.properties().size(), extraction.method(), url,
+                    result.html().length() / 1024);
+            allExtracted.addAll(extraction.properties());
         }
 
         if (allExtracted.isEmpty()) {
@@ -173,7 +182,7 @@ public class AgentPipelineService {
         // Enrich listings that have no images by fetching og:image from their listing pages
         allExtracted = imageEnricher.enrich(allExtracted);
 
-        PipelineResult pipelineResult = processExtractedProperties(allExtracted, site.getName(), site.getBaseUrl());
+        PipelineResult pipelineResult = processExtractedProperties(allExtracted, site.getName(), site.getBaseUrl(), extractionMethod);
         if (lastHash != null) updateSiteHash(site, lastHash);
         return new SiteResult(false, pipelineResult);
     }
@@ -230,8 +239,48 @@ public class AgentPipelineService {
                 .toList();
     }
 
+    record ExtractionResult(List<ExtractedProperty> properties, String method) {}
+
+    private ExtractionResult extractWithStrategy(String rawHtml, String strippedHtml, MonitoredSite site) {
+        // Tier 1: Try existing CSS selectors
+        if (site.getCssSelectors() != null && !site.getCssSelectors().isEmpty()) {
+            List<ExtractedProperty> results = cssSelectorExtractor.extract(rawHtml, site.getCssSelectors());
+            if (isValidExtraction(results)) {
+                return new ExtractionResult(results, "css");
+            }
+            log.warn("{}: CSS selectors broke ({} results), escalating to selector generation",
+                    site.getName(), results.size());
+        }
+
+        // Tier 2: Generate new selectors via frontier model
+        if (selectorGeneratorService != null) {
+            var generated = selectorGeneratorService.generateAndValidate(rawHtml, site.getName());
+            if (generated.isPresent()) {
+                site.setCssSelectors(generated.get().selectors());
+                site.setSelectorsGeneratedAt(Instant.now());
+                site.setSelectorsModel("claude-sonnet");
+                siteRepo.save(site);
+                log.info("{}: generated new CSS selectors ({} listings)", site.getName(), generated.get().results().size());
+                return new ExtractionResult(generated.get().results(), "css-generated");
+            }
+            log.warn("{}: selector generation failed, falling back to LLM extraction", site.getName());
+        }
+
+        // Tier 3: Fall back to per-page LLM extraction (current behavior)
+        List<ExtractedProperty> results = extractor.extract(strippedHtml, site.getName());
+        return new ExtractionResult(results, "llm-fallback");
+    }
+
+    private boolean isValidExtraction(List<ExtractedProperty> results) {
+        if (results.isEmpty()) return false;
+        boolean hasAddress = results.stream().anyMatch(r -> r.address() != null && !r.address().isBlank());
+        boolean hasPrice = results.stream().anyMatch(r -> r.price() != null && !r.price().isBlank());
+        return hasAddress && hasPrice;
+    }
+
     public PipelineResult processExtractedProperties(List<ExtractedProperty> extracted,
-                                                      String siteName, String siteBaseUrl) {
+                                                      String siteName, String siteBaseUrl,
+                                                      String extractionMethod) {
         int newCount = 0, updatedCount = 0;
         List<String> newPropertyIds = new ArrayList<>();
 
@@ -261,13 +310,13 @@ public class AgentPipelineService {
                     log.info("Medium confidence match ({}) for: {} ↔ {}",
                             String.format("%.2f", confidence), normalizedAddr, prop.getNormalizedAddress());
                 }
-                saveListing(prop.getId(), ep, siteName, siteBaseUrl);
+                saveListing(prop.getId(), ep, siteName, siteBaseUrl, extractionMethod);
                 updatedCount++;
             } else {
                 Property prop = createProperty(ep, normalizedAddr);
                 propertyRepo.save(prop);
                 scoreAndAssess(prop);
-                saveListing(prop.getId(), ep, siteName, siteBaseUrl);
+                saveListing(prop.getId(), ep, siteName, siteBaseUrl, extractionMethod);
                 newPropertyIds.add(prop.getId());
                 newCount++;
             }
@@ -299,7 +348,7 @@ public class AgentPipelineService {
     }
 
     private void saveListing(String propertyId, ExtractedProperty ep,
-                              String siteName, String siteBaseUrl) {
+                              String siteName, String siteBaseUrl, String extractionMethod) {
         String siteListingId = siteName.toLowerCase().replace(" ", "") + "#" +
                 UUID.randomUUID().toString().substring(0, 8);
 
@@ -322,6 +371,7 @@ public class AgentPipelineService {
         listing.setAgentPhone(ep.agentPhone());
         listing.setAgentEmail(ep.agentEmail());
         listing.setScrapedAt(Instant.now());
+        listing.setExtractionMethod(extractionMethod);
         listingRepo.save(listing);
     }
 
