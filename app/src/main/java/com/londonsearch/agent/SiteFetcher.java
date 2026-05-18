@@ -58,5 +58,14 @@ public class SiteFetcher {
         return previousHash == null || !previousHash.equals(newHash);
     }
 
+    /** Strips scripts, styles, SVGs and other boilerplate to reduce HTML size for LLM extraction. */
+    public static String stripBoilerplate(String html) {
+        Document doc = Jsoup.parse(html);
+        doc.select("script, style, noscript, svg, link[rel=stylesheet], link[rel=preload], link[rel=prefetch]").remove();
+        doc.select("[style*=display:none], [style*=display: none], [hidden]").remove();
+        doc.head().empty();
+        return doc.body().html();
+    }
+
     public record FetchResult(String html, String hash, String url) {}
 }

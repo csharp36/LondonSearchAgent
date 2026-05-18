@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 public class AgentPipelineService {
@@ -146,8 +147,12 @@ public class AgentPipelineService {
             SiteFetcher.FetchResult result = fetchResult.get();
             lastHash = result.hash();
 
-            List<ExtractedProperty> extracted = extractor.extract(result.html(), site.getName());
-            log.info("{}: extracted {} properties from {}", site.getName(), extracted.size(), url);
+            // Strip boilerplate HTML (scripts, styles, SVGs) to fit more listing data within the LLM's truncation window
+            String strippedHtml = SiteFetcher.stripBoilerplate(result.html());
+            List<ExtractedProperty> extracted = extractor.extract(strippedHtml, site.getName());
+            log.info("{}: extracted {} properties from {} (raw {}KB → stripped {}KB)",
+                    site.getName(), extracted.size(), url,
+                    result.html().length() / 1024, strippedHtml.length() / 1024);
             allExtracted.addAll(extracted);
         }
 
@@ -155,6 +160,12 @@ public class AgentPipelineService {
             if (lastHash != null) updateSiteHash(site, lastHash);
             return new SiteResult(urls.isEmpty(), new PipelineResult(0, 0, List.of()));
         }
+
+        // Resolve relative URLs to absolute using the site's base URL
+        allExtracted = resolveRelativeUrls(allExtracted, site.getBaseUrl());
+
+        // Sanitize hallucinated listing URLs (e.g. Zoopla's fake sequential IDs)
+        allExtracted = sanitizeListingUrls(allExtracted);
 
         // Validate image URLs — strip hallucinated/broken ones so enricher can fill in real ones
         allExtracted = imageValidator.validate(allExtracted);
@@ -190,17 +201,21 @@ public class AgentPipelineService {
                 .replace("{minPrice}", config.getMinPrice() != null ? config.getMinPrice().toString() : "0")
                 .replace("{maxPrice}", config.getMaxPrice() != null ? config.getMaxPrice().toString() : "100000");
 
-        // Handle Rightmove's special {rightmoveCode} placeholder
+        // Handle Rightmove's special {rightmoveCode} placeholder — paginate to get all results
         if (base.contains("{rightmoveCode}")) {
             List<String> areas = config.getAreas();
             if (areas == null || areas.isEmpty()) return List.of();
-            return areas.stream()
-                    .map(area -> {
-                        String slug = area.toLowerCase().replace(" ", "-");
-                        String code = RIGHTMOVE_CODES.getOrDefault(slug, "87490"); // fallback to London
-                        return base.replace("{rightmoveCode}", code);
-                    })
-                    .toList();
+            List<String> paginatedUrls = new ArrayList<>();
+            for (String area : areas) {
+                String slug = area.toLowerCase().replace(" ", "-");
+                String code = RIGHTMOVE_CODES.getOrDefault(slug, "87490"); // fallback to London
+                String pageUrl = base.replace("{rightmoveCode}", code);
+                // Rightmove shows 24 results per page; fetch up to 4 pages (96 results) per area
+                for (int index = 0; index < 96; index += 24) {
+                    paginatedUrls.add(pageUrl + "&index=" + index);
+                }
+            }
+            return paginatedUrls;
         }
 
         if (!base.contains("{area}")) return List.of(base);
@@ -308,6 +323,47 @@ public class AgentPipelineService {
         listing.setAgentEmail(ep.agentEmail());
         listing.setScrapedAt(Instant.now());
         listingRepo.save(listing);
+    }
+
+    /** Converts relative listing and image URLs to absolute using the site's base URL. */
+    private List<ExtractedProperty> resolveRelativeUrls(List<ExtractedProperty> properties, String baseUrl) {
+        if (baseUrl == null) return properties;
+        return properties.stream().map(ep -> {
+            String listingUrl = resolveUrl(ep.listingUrl(), baseUrl);
+            List<String> imageUrls = ep.imageUrls() != null
+                    ? ep.imageUrls().stream().map(url -> resolveUrl(url, baseUrl)).toList()
+                    : null;
+            if (listingUrl != ep.listingUrl() || imageUrls != ep.imageUrls()) {
+                return new ExtractedProperty(
+                        ep.address(), ep.price(), ep.bedrooms(), ep.bathrooms(),
+                        ep.sqft(), ep.propertyType(), ep.furnishing(), ep.description(),
+                        listingUrl, imageUrls, ep.floorPlanUrl(), ep.availableFrom(),
+                        ep.agentName(), ep.agentPhone(), ep.agentEmail());
+            }
+            return ep;
+        }).toList();
+    }
+
+    private String resolveUrl(String url, String baseUrl) {
+        if (url == null || url.isBlank() || url.startsWith("http")) return url;
+        return baseUrl + (url.startsWith("/") ? "" : "/") + url;
+    }
+
+    private static final Pattern HALLUCINATED_ID_PATTERN = Pattern.compile("/(\\d{10,})");
+
+    /** Nulls out listing URLs with obviously hallucinated IDs (e.g. Zoopla's sequential 19-digit numbers). */
+    private List<ExtractedProperty> sanitizeListingUrls(List<ExtractedProperty> properties) {
+        return properties.stream().map(ep -> {
+            if (ep.listingUrl() != null && HALLUCINATED_ID_PATTERN.matcher(ep.listingUrl()).find()) {
+                log.warn("Stripping hallucinated listing URL: {}", ep.listingUrl());
+                return new ExtractedProperty(
+                        ep.address(), ep.price(), ep.bedrooms(), ep.bathrooms(),
+                        ep.sqft(), ep.propertyType(), ep.furnishing(), ep.description(),
+                        null, ep.imageUrls(), ep.floorPlanUrl(), ep.availableFrom(),
+                        ep.agentName(), ep.agentPhone(), ep.agentEmail());
+            }
+            return ep;
+        }).toList();
     }
 
     /** Filters out malformed, duplicate-base-URL, and obviously hallucinated image URLs. */
