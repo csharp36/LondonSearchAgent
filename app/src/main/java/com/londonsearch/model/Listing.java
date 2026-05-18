@@ -20,6 +20,7 @@ public class Listing {
     private String agentPhone;
     private String agentEmail;
     private Instant scrapedAt;
+    private String extractionMethod;
 
     @DynamoDbPartitionKey
     public String getPropertyId() { return propertyId; }
@@ -51,4 +52,6 @@ public class Listing {
     public void setAgentEmail(String agentEmail) { this.agentEmail = agentEmail; }
     public Instant getScrapedAt() { return scrapedAt; }
     public void setScrapedAt(Instant scrapedAt) { this.scrapedAt = scrapedAt; }
+    public String getExtractionMethod() { return extractionMethod; }
+    public void setExtractionMethod(String extractionMethod) { this.extractionMethod = extractionMethod; }
 }

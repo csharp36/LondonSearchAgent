@@ -2,6 +2,7 @@ package com.londonsearch.model;
 
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 import java.time.Instant;
+import java.util.Map;
 
 @DynamoDbBean
 public class MonitoredSite {
@@ -15,6 +16,9 @@ public class MonitoredSite {
     private Instant lastCheckedAt;
     private String lastChangeHash;
     private String tier;
+    private Map<String, String> cssSelectors;
+    private Instant selectorsGeneratedAt;
+    private String selectorsModel;
 
     @DynamoDbPartitionKey
     public String getId() { return id; }
@@ -36,4 +40,10 @@ public class MonitoredSite {
     public void setLastChangeHash(String lastChangeHash) { this.lastChangeHash = lastChangeHash; }
     public String getTier() { return tier; }
     public void setTier(String tier) { this.tier = tier; }
+    public Map<String, String> getCssSelectors() { return cssSelectors; }
+    public void setCssSelectors(Map<String, String> cssSelectors) { this.cssSelectors = cssSelectors; }
+    public Instant getSelectorsGeneratedAt() { return selectorsGeneratedAt; }
+    public void setSelectorsGeneratedAt(Instant selectorsGeneratedAt) { this.selectorsGeneratedAt = selectorsGeneratedAt; }
+    public String getSelectorsModel() { return selectorsModel; }
+    public void setSelectorsModel(String selectorsModel) { this.selectorsModel = selectorsModel; }
 }
