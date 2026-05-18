@@ -79,7 +79,8 @@ public class BedrockExtractor implements PropertyExtractor {
     public List<ExtractedProperty> extract(String html, String siteName) {
         log.info("BedrockExtractor: extracting from {} ({} chars of HTML)", siteName, html.length());
 
-        String truncatedHtml = html.length() > 500_000 ? html.substring(0, 500_000) : html;
+        // Nova Micro supports 128K tokens (~340K chars of HTML). Reserve room for the prompt text.
+        String truncatedHtml = html.length() > 300_000 ? html.substring(0, 300_000) : html;
         String prompt = String.format(EXTRACTION_PROMPT, siteName, truncatedHtml);
 
         try {
