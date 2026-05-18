@@ -23,16 +23,32 @@ class SelectorGeneratorServiceTest {
     private SelectorGeneratorService service;
 
     /**
-     * Sample HTML with one .property-card containing .address, .price, .beds, .link @href, .photo @src.
+     * Sample HTML with 3 repeating .property-card elements (needed for card detection).
      */
     private static final String SAMPLE_HTML = """
             <html><body>
-              <div class="property-card">
-                <span class="address">15 Mount Street, Mayfair, London W1K 2RN</span>
-                <span class="price">£7,500 pcm</span>
-                <span class="beds">3</span>
-                <a class="link" href="/listings/mount-street">View listing</a>
-                <img class="photo" src="https://example.com/photo1.jpg" />
+              <div class="results">
+                <div class="property-card">
+                  <span class="address">15 Mount Street, Mayfair, London W1K 2RN</span>
+                  <span class="price">£7,500 pcm</span>
+                  <span class="beds">3</span>
+                  <a class="link" href="/listings/mount-street">View listing</a>
+                  <img class="photo" src="https://example.com/photo1.jpg" />
+                </div>
+                <div class="property-card">
+                  <span class="address">42 Baker Street, London W1U 3BW</span>
+                  <span class="price">£5,000 pcm</span>
+                  <span class="beds">2</span>
+                  <a class="link" href="/listings/baker-street">View listing</a>
+                  <img class="photo" src="https://example.com/photo2.jpg" />
+                </div>
+                <div class="property-card">
+                  <span class="address">8 Onslow Gardens, London SW7 3AQ</span>
+                  <span class="price">£6,200 pcm</span>
+                  <span class="beds">2</span>
+                  <a class="link" href="/listings/onslow">View listing</a>
+                  <img class="photo" src="https://example.com/photo3.jpg" />
+                </div>
               </div>
             </body></html>
             """;
@@ -63,7 +79,7 @@ class SelectorGeneratorServiceTest {
         assertThat(result).isPresent();
         assertThat(result.get().selectors()).containsKey("listingContainer");
         assertThat(result.get().selectors().get("listingContainer")).isEqualTo(".property-card");
-        assertThat(result.get().results()).hasSize(1);
+        assertThat(result.get().results()).hasSize(3);
         assertThat(result.get().results().get(0).address()).isEqualTo("15 Mount Street, Mayfair, London W1K 2RN");
         assertThat(result.get().results().get(0).price()).isEqualTo("£7,500 pcm");
     }
@@ -131,7 +147,7 @@ class SelectorGeneratorServiceTest {
 
         assertThat(result).isPresent();
         assertThat(result.get().selectors()).containsKey("listingContainer");
-        assertThat(result.get().results()).hasSize(1);
+        assertThat(result.get().results()).hasSize(3);
         assertThat(result.get().results().get(0).address()).isEqualTo("15 Mount Street, Mayfair, London W1K 2RN");
         assertThat(result.get().results().get(0).price()).isEqualTo("£7,500 pcm");
     }

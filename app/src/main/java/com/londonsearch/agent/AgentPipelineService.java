@@ -46,6 +46,7 @@ public class AgentPipelineService {
     private final ImageEnricher imageEnricher;
     private final PlaywrightFetcher playwrightFetcher;
     private final CssSelectorExtractor cssSelectorExtractor;
+    private final NextDataExtractor nextDataExtractor;
     private final SelectorGeneratorService selectorGeneratorService; // nullable in mock mode
 
     public AgentPipelineService(SiteFetcher siteFetcher,
@@ -66,6 +67,7 @@ public class AgentPipelineService {
                                  ImageEnricher imageEnricher,
                                  PlaywrightFetcher playwrightFetcher,
                                  CssSelectorExtractor cssSelectorExtractor,
+                                 NextDataExtractor nextDataExtractor,
                                  @Autowired(required = false) SelectorGeneratorService selectorGeneratorService) {
         this.siteFetcher = siteFetcher;
         this.extractor = extractor;
@@ -85,6 +87,7 @@ public class AgentPipelineService {
         this.imageEnricher = imageEnricher;
         this.playwrightFetcher = playwrightFetcher;
         this.cssSelectorExtractor = cssSelectorExtractor;
+        this.nextDataExtractor = nextDataExtractor;
         this.selectorGeneratorService = selectorGeneratorService;
     }
 
@@ -242,6 +245,12 @@ public class AgentPipelineService {
     record ExtractionResult(List<ExtractedProperty> properties, String method) {}
 
     private ExtractionResult extractWithStrategy(String rawHtml, String strippedHtml, MonitoredSite site) {
+        // Tier 0: Try __NEXT_DATA__ JSON extraction (Next.js sites like Foxtons)
+        List<ExtractedProperty> nextDataResults = nextDataExtractor.extract(rawHtml, site.getName());
+        if (isValidExtraction(nextDataResults)) {
+            return new ExtractionResult(nextDataResults, "json");
+        }
+
         // Tier 1: Try existing CSS selectors
         if (site.getCssSelectors() != null && !site.getCssSelectors().isEmpty()) {
             List<ExtractedProperty> results = cssSelectorExtractor.extract(rawHtml, site.getCssSelectors());
