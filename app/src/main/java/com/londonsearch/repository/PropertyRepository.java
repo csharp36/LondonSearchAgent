@@ -55,4 +55,8 @@ public class PropertyRepository {
         Key key = Key.builder().partitionValue(id).build();
         table.deleteItem(key);
     }
+
+    public void deleteAll() {
+        table.scan().items().forEach(p -> delete(p.getId()));
+    }
 }

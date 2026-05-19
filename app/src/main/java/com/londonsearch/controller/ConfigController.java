@@ -2,7 +2,9 @@ package com.londonsearch.controller;
 
 import com.londonsearch.model.MonitoredSite;
 import com.londonsearch.model.SearchConfig;
+import com.londonsearch.repository.ListingRepository;
 import com.londonsearch.repository.MonitoredSiteRepository;
+import com.londonsearch.repository.PropertyRepository;
 import com.londonsearch.repository.SearchConfigRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -22,11 +24,17 @@ public class ConfigController {
 
     private final SearchConfigRepository searchConfigRepository;
     private final MonitoredSiteRepository monitoredSiteRepository;
+    private final PropertyRepository propertyRepository;
+    private final ListingRepository listingRepository;
 
     public ConfigController(SearchConfigRepository searchConfigRepository,
-                            MonitoredSiteRepository monitoredSiteRepository) {
+                            MonitoredSiteRepository monitoredSiteRepository,
+                            PropertyRepository propertyRepository,
+                            ListingRepository listingRepository) {
         this.searchConfigRepository = searchConfigRepository;
         this.monitoredSiteRepository = monitoredSiteRepository;
+        this.propertyRepository = propertyRepository;
+        this.listingRepository = listingRepository;
     }
 
     // ── Search Criteria ──────────────────────────────────────────────────────
@@ -56,6 +64,7 @@ public class ConfigController {
             @RequestParam(required = false) Integer minBaths,
             @RequestParam(required = false) List<String> furnishing,
             @RequestParam(required = false, defaultValue = "") String additionalCriteria,
+            @RequestParam(required = false) boolean deleteExistingData,
             @RequestParam(required = false) String action) {
 
         SearchConfig config;
@@ -92,6 +101,11 @@ public class ConfigController {
         config.setAdditionalCriteria(additionalCriteria);
 
         searchConfigRepository.save(config);
+
+        if (deleteExistingData) {
+            listingRepository.deleteAll();
+            propertyRepository.deleteAll();
+        }
 
         if ("scan".equals(action)) {
             return "redirect:/config/pipeline/progress";

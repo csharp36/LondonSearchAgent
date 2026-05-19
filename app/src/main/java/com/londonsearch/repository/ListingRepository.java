@@ -34,4 +34,13 @@ public class ListingRepository {
         Key key = Key.builder().partitionValue(propertyId).sortValue(siteListingId).build();
         return Optional.ofNullable(table.getItem(key));
     }
+
+    public void delete(String propertyId, String siteListingId) {
+        Key key = Key.builder().partitionValue(propertyId).sortValue(siteListingId).build();
+        table.deleteItem(key);
+    }
+
+    public void deleteAll() {
+        table.scan().items().forEach(l -> delete(l.getPropertyId(), l.getSiteListingId()));
+    }
 }

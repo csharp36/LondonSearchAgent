@@ -244,6 +244,16 @@
                                          placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"></textarea>
                     </div>
 
+                    <!-- Delete existing data -->
+                    <div class="pt-1 border-t border-slate-700">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="deleteExistingData" value="true"
+                                   class="w-4 h-4 accent-red-500 bg-slate-700 border-slate-600 rounded"/>
+                            <span class="text-sm text-red-400">Delete existing data?</span>
+                        </label>
+                        <p class="text-xs text-slate-500 mt-1 ml-6">Removes all properties and listings before scanning. Use when AI instructions have changed.</p>
+                    </div>
+
                     <!-- Buttons -->
                     <div class="flex gap-2 pt-1">
                         <button type="submit" name="action" value="save"
