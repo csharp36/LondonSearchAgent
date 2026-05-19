@@ -153,7 +153,7 @@ Add under `app.aws.tables:`:
 Also add under `app:`:
 ```yaml
   alert:
-    email-to: ${ALERT_EMAIL:csharp36@gmail.com}
+    email-to: ${ALERT_EMAIL:}
     portal-base-url: ${PORTAL_BASE_URL:http://localhost:8080}
 ```
 

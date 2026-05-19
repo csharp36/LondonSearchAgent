@@ -50,8 +50,9 @@ public class PortalStack extends Stack {
                                         "AWS_REGION", props.getEnv().getRegion(),
                                         "EXTRACTOR_TYPE", "bedrock",
                                         "BEDROCK_REGION", "us-east-1",
-                                        "APP_PASSWORD", System.getenv("LONDONSEARCH_PASSWORD") != null
-                                                ? System.getenv("LONDONSEARCH_PASSWORD") : "changeme",
+                                        "APP_PASSWORD", java.util.Objects.requireNonNull(
+                                                System.getenv("LONDONSEARCH_PASSWORD"),
+                                                "LONDONSEARCH_PASSWORD env var must be set for deployment"),
                                         "PROPERTIES_TABLE", propertiesTable.getTableName(),
                                         "LISTINGS_TABLE", listingsTable.getTableName(),
                                         "SEARCH_CONFIGS_TABLE", searchConfigsTable.getTableName(),

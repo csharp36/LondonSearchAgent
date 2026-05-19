@@ -96,7 +96,7 @@ All config in `app/src/main/resources/application.yml` with env var overrides:
 | Bedrock Region | `BEDROCK_REGION` | us-east-1 |
 | Extraction Model | `BEDROCK_MODEL_ID` | amazon.nova-micro-v1:0 |
 | Assessment Model | `BEDROCK_INTELLIGENCE_MODEL_ID` | us.anthropic.claude-sonnet-4-6 |
-| Alert Email To | `ALERT_EMAIL` | csharp36@gmail.com |
+| Alert Email To | `ALERT_EMAIL` | (none — must be set) |
 | Alert Email From | `ALERT_EMAIL_FROM` | noreply@londonsearchagent.com |
 | Portal Base URL | `PORTAL_BASE_URL` | http://localhost:8080 |
 | Cost Guard | `COST_GUARD_ENABLED` | false |

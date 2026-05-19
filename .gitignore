@@ -3,4 +3,6 @@
 build/
 app/build/
 infra/build/
+infra/cdk.out/
+cdk.context.json
 *.class
