@@ -321,7 +321,7 @@ public class DataSeeder implements CommandLineRunner {
         // Tier 1
         saveMonitoredSite("site-knight-frank", "Knight Frank", "https://www.knightfrank.co.uk",
                 "https://www.knightfrank.co.uk/properties/residential/to-let/uk-greater-london-{area}/all-types/{minBeds}-{maxBeds}-beds;pricemin={minPrice};pricemax={maxPrice}",
-                "http", true, "tier1");
+                "js-rendered", true, "tier1");
 
         saveMonitoredSite("site-savills", "Savills", "https://www.savills.co.uk",
                 "https://search.savills.com/list?SearchList=Id_51730+Category_TownVillageCity&Tenure=GRS_T_R&SortOrder=SO_PCDD&MinPrice={minPrice}&MaxPrice={maxPrice}&MinBedrooms={minBeds}&MaxBedrooms={maxBeds}&Category=GRS_CAT_RES&Currency=GBP&Period=Month",
