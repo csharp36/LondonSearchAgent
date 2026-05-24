@@ -1,30 +1,33 @@
 package com.londonsearch.agent;
 
+import com.anthropic.client.AnthropicClient;
+import com.anthropic.models.messages.ContentBlock;
+import com.anthropic.models.messages.Message;
+import com.anthropic.models.messages.MessageCreateParams;
+import com.anthropic.models.messages.TextBlock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
-import software.amazon.awssdk.services.bedrockruntime.model.*;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SelectorGeneratorServiceTest {
 
-    @Mock
-    private BedrockRuntimeClient bedrockClient;
+    @Mock(answer = RETURNS_DEEP_STUBS)
+    private AnthropicClient anthropicClient;
 
     private SelectorGeneratorService service;
 
-    /**
-     * Sample HTML with 3 repeating .property-card elements (needed for card detection).
-     */
     private static final String SAMPLE_HTML = """
             <html><body>
               <div class="results">
@@ -55,10 +58,8 @@ class SelectorGeneratorServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new SelectorGeneratorService(bedrockClient, new CssSelectorExtractor(), "us.anthropic.claude-sonnet-4-6");
+        service = new SelectorGeneratorService(anthropicClient, new CssSelectorExtractor(), "claude-sonnet-4-20250514");
     }
-
-    // ── Test 1: validSelectorsReturnResults ──────────────────────────────────
 
     @Test
     void validSelectorsReturnResults() {
@@ -84,11 +85,8 @@ class SelectorGeneratorServiceTest {
         assertThat(result.get().results().get(0).price()).isEqualTo("£7,500 pcm");
     }
 
-    // ── Test 2: invalidSelectorsReturnEmpty ──────────────────────────────────
-
     @Test
     void invalidSelectorsReturnEmpty() {
-        // Selectors that won't match anything in the sample HTML
         stubResponse("""
                 {
                   "listingContainer": ".no-such-container",
@@ -103,8 +101,6 @@ class SelectorGeneratorServiceTest {
         assertThat(result).isEmpty();
     }
 
-    // ── Test 3: malformedJsonResponseReturnEmpty ─────────────────────────────
-
     @Test
     void malformedJsonResponseReturnEmpty() {
         stubResponse("I'm sorry, I could not find any CSS selectors for this page.");
@@ -115,20 +111,16 @@ class SelectorGeneratorServiceTest {
         assertThat(result).isEmpty();
     }
 
-    // ── Test 4: bedrockExceptionReturnEmpty ──────────────────────────────────
-
     @Test
-    void bedrockExceptionReturnEmpty() {
-        when(bedrockClient.converse(any(ConverseRequest.class)))
-                .thenThrow(new RuntimeException("Bedrock service unavailable"));
+    void apiExceptionReturnEmpty() {
+        when(anthropicClient.messages().create(any(MessageCreateParams.class)))
+                .thenThrow(new RuntimeException("Service unavailable"));
 
         Optional<SelectorGeneratorService.GenerationResult> result =
                 service.generateAndValidate(SAMPLE_HTML, "TestSite");
 
         assertThat(result).isEmpty();
     }
-
-    // ── Test 5: jsonWrappedInCodeFencesIsParsed ──────────────────────────────
 
     @Test
     void jsonWrappedInCodeFencesIsParsed() {
@@ -152,17 +144,15 @@ class SelectorGeneratorServiceTest {
         assertThat(result.get().results().get(0).price()).isEqualTo("£7,500 pcm");
     }
 
-    // ── Helper ───────────────────────────────────────────────────────────────
-
+    @SuppressWarnings("unchecked")
     private void stubResponse(String responseText) {
-        ConverseResponse response = ConverseResponse.builder()
-                .output(ConverseOutput.builder()
-                        .message(Message.builder()
-                                .role(ConversationRole.ASSISTANT)
-                                .content(ContentBlock.fromText(responseText))
-                                .build())
-                        .build())
-                .build();
-        when(bedrockClient.converse(any(ConverseRequest.class))).thenReturn(response);
+        ContentBlock block = mock(ContentBlock.class);
+        TextBlock textBlock = mock(TextBlock.class);
+        when(textBlock.text()).thenReturn(responseText);
+        when(block.text()).thenReturn(Optional.of(textBlock));
+
+        Message message = mock(Message.class);
+        when(message.content()).thenReturn(List.of(block));
+        when(anthropicClient.messages().create(any(MessageCreateParams.class))).thenReturn(message);
     }
 }

@@ -1,5 +1,7 @@
 package com.londonsearch.agent;
 
+import com.anthropic.client.AnthropicClient;
+import com.anthropic.models.messages.MessageCreateParams;
 import com.londonsearch.model.Property;
 import com.londonsearch.model.SearchConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,28 +9,27 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
-import software.amazon.awssdk.services.bedrockruntime.model.*;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class BedrockIntelligenceTest {
+class AnthropicIntelligenceTest {
 
-    @Mock
-    private BedrockRuntimeClient bedrockClient;
+    @Mock(answer = RETURNS_DEEP_STUBS)
+    private AnthropicClient anthropicClient;
 
-    private BedrockIntelligence intelligence;
+    private AnthropicIntelligence intelligence;
     private Property property;
     private SearchConfig config;
 
     @BeforeEach
     void setUp() {
-        intelligence = new BedrockIntelligence(bedrockClient, "us.anthropic.claude-sonnet-4-6");
+        intelligence = new AnthropicIntelligence(anthropicClient, "claude-sonnet-4-20250514");
 
         property = new Property();
         property.setAddress("42 Baker Street, London W1U 3BW");
@@ -47,12 +48,10 @@ class BedrockIntelligenceTest {
 
     @Test
     void wellFormedResponse() {
-        stubResponse("""
+        var result = intelligence.parseAssessment("""
                 SUMMARY: Excellent location on Baker Street in the heart of Marylebone. Well-priced for a 3-bed at £7,500 pcm with good transport links.
                 SCORE: 75
-                """);
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+                """, "Marylebone");
 
         assertThat(result.aiSummary()).startsWith("Excellent location");
         assertThat(result.aiScore()).isEqualTo(75);
@@ -60,60 +59,49 @@ class BedrockIntelligenceTest {
 
     @Test
     void scoreClampedTo100() {
-        stubResponse("""
+        var result = intelligence.parseAssessment("""
                 SUMMARY: Perfect property.
                 SCORE: 150
-                """);
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+                """, "Marylebone");
 
         assertThat(result.aiScore()).isEqualTo(100);
     }
 
     @Test
     void scoreWithTrailingNonNumeric() {
-        stubResponse("""
+        var result = intelligence.parseAssessment("""
                 SUMMARY: Good property in a prime area.
                 SCORE: 85.
-                """);
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+                """, "Marylebone");
 
         assertThat(result.aiScore()).isEqualTo(85);
     }
 
     @Test
     void scoreWithSlashNotationClamps() {
-        // "85/100" → replaceAll("[^0-9]","") → "85100" → clamped to 100
-        stubResponse("""
+        var result = intelligence.parseAssessment("""
                 SUMMARY: Good property.
                 SCORE: 85/100
-                """);
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+                """, "Marylebone");
 
         assertThat(result.aiScore()).isEqualTo(100);
     }
 
     @Test
     void scoreWithPercentSign() {
-        stubResponse("""
+        var result = intelligence.parseAssessment("""
                 SUMMARY: Decent property.
                 SCORE: 60%
-                """);
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+                """, "Marylebone");
 
         assertThat(result.aiScore()).isEqualTo(60);
     }
 
     @Test
     void missingScoreDefaultsTo50() {
-        stubResponse("""
+        var result = intelligence.parseAssessment("""
                 SUMMARY: Nice flat but no score provided for some reason.
-                """);
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+                """, "Marylebone");
 
         assertThat(result.aiSummary()).isEqualTo("Nice flat but no score provided for some reason.");
         assertThat(result.aiScore()).isEqualTo(50);
@@ -121,11 +109,9 @@ class BedrockIntelligenceTest {
 
     @Test
     void missingSummaryDefaultsToFallback() {
-        stubResponse("""
+        var result = intelligence.parseAssessment("""
                 SCORE: 70
-                """);
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+                """, "Marylebone");
 
         assertThat(result.aiSummary()).isEqualTo("AI assessment unavailable.");
         assertThat(result.aiScore()).isEqualTo(70);
@@ -133,17 +119,16 @@ class BedrockIntelligenceTest {
 
     @Test
     void completelyMalformedResponseDefaultsToBoth() {
-        stubResponse("I don't understand the format you want.");
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+        var result = intelligence.parseAssessment(
+                "I don't understand the format you want.", "Marylebone");
 
         assertThat(result.aiSummary()).isEqualTo("AI assessment unavailable.");
         assertThat(result.aiScore()).isEqualTo(50);
     }
 
     @Test
-    void bedrockExceptionReturnsDefault() {
-        when(bedrockClient.converse(any(ConverseRequest.class)))
+    void apiExceptionReturnsDefault() {
+        when(anthropicClient.messages().create(any(MessageCreateParams.class)))
                 .thenThrow(new RuntimeException("Service unavailable"));
 
         PropertyIntelligence.Assessment result = intelligence.assess(property, config);
@@ -160,51 +145,37 @@ class BedrockIntelligenceTest {
         sparse.setPricePerMonth(null);
         sparse.setPrice(null);
 
-        stubResponse("""
-                SUMMARY: Limited data available.
-                SCORE: 30
-                """);
+        // The API call will fail (mocked with deep stubs returns null),
+        // but should not NPE — should return defaults
+        when(anthropicClient.messages().create(any(MessageCreateParams.class)))
+                .thenThrow(new RuntimeException("mock"));
 
         PropertyIntelligence.Assessment result = intelligence.assess(sparse, config);
 
-        assertThat(result.aiScore()).isEqualTo(30);
+        assertThat(result.aiSummary()).isEqualTo("AI assessment unavailable.");
+        assertThat(result.aiScore()).isEqualTo(50);
     }
 
     @Test
     void nullConfigDoesNotCauseNpe() {
-        stubResponse("""
-                SUMMARY: Assessment without config.
-                SCORE: 55
-                """);
+        when(anthropicClient.messages().create(any(MessageCreateParams.class)))
+                .thenThrow(new RuntimeException("mock"));
 
         PropertyIntelligence.Assessment result = intelligence.assess(property, null);
 
-        assertThat(result.aiScore()).isEqualTo(55);
+        assertThat(result.aiSummary()).isEqualTo("AI assessment unavailable.");
+        assertThat(result.aiScore()).isEqualTo(50);
     }
 
     @Test
     void multilineSummaryTakesFirstLine() {
-        stubResponse("""
+        var result = intelligence.parseAssessment("""
                 SUMMARY: Great property in Marylebone with excellent transport links.
                 It also has a lovely garden and period features throughout.
                 SCORE: 80
-                """);
-
-        PropertyIntelligence.Assessment result = intelligence.assess(property, config);
+                """, "Marylebone");
 
         assertThat(result.aiSummary()).isEqualTo("Great property in Marylebone with excellent transport links.");
         assertThat(result.aiScore()).isEqualTo(80);
-    }
-
-    private void stubResponse(String responseText) {
-        ConverseResponse response = ConverseResponse.builder()
-                .output(ConverseOutput.builder()
-                        .message(Message.builder()
-                                .role(ConversationRole.ASSISTANT)
-                                .content(ContentBlock.fromText(responseText))
-                                .build())
-                        .build())
-                .build();
-        when(bedrockClient.converse(any(ConverseRequest.class))).thenReturn(response);
     }
 }

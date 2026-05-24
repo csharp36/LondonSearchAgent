@@ -1,19 +1,19 @@
 package com.londonsearch.agent;
 
+import com.anthropic.client.AnthropicClient;
+import com.anthropic.models.messages.Message;
+import com.anthropic.models.messages.MessageCreateParams;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
-import software.amazon.awssdk.services.bedrockruntime.model.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -69,15 +69,15 @@ public class SelectorGeneratorService {
             %s
             """;
 
-    private final BedrockRuntimeClient bedrockClient;
+    private final AnthropicClient anthropicClient;
     private final CssSelectorExtractor cssExtractor;
     private final String selectorModelId;
 
     public SelectorGeneratorService(
-            BedrockRuntimeClient bedrockClient,
+            AnthropicClient anthropicClient,
             CssSelectorExtractor cssExtractor,
-            @Value("${app.agent.bedrock.selector-model-id}") String selectorModelId) {
-        this.bedrockClient = bedrockClient;
+            @Value("${app.agent.anthropic.model-id:claude-sonnet-4-20250514}") String selectorModelId) {
+        this.anthropicClient = anthropicClient;
         this.cssExtractor = cssExtractor;
         this.selectorModelId = selectorModelId;
     }
@@ -109,20 +109,19 @@ public class SelectorGeneratorService {
             String prompt = String.format(SELECTOR_PROMPT,
                     siteName, sample.count, sample.containerSelector, sample.sampleHtml);
 
-            // Step 3: Call Bedrock Converse API
-            ConverseResponse response = bedrockClient.converse(ConverseRequest.builder()
-                    .modelId(selectorModelId)
-                    .messages(Message.builder()
-                            .role(ConversationRole.USER)
-                            .content(ContentBlock.fromText(prompt))
-                            .build())
-                    .inferenceConfig(InferenceConfiguration.builder()
-                            .maxTokens(2000)
-                            .temperature(0.0f)
-                            .build())
+            // Step 3: Call Anthropic Messages API
+            Message message = anthropicClient.messages().create(MessageCreateParams.builder()
+                    .model(selectorModelId)
+                    .maxTokens(2000L)
+                    .temperature(0.0)
+                    .addUserMessage(prompt)
                     .build());
 
-            String responseText = response.output().message().content().get(0).text();
+            String responseText = message.content().stream()
+                    .flatMap(block -> block.text().stream())
+                    .map(textBlock -> textBlock.text())
+                    .findFirst()
+                    .orElse("");
 
             // Step 4: Parse response — strip markdown fences
             responseText = responseText.strip();

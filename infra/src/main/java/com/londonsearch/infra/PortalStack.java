@@ -45,19 +45,22 @@ public class PortalStack extends Stack {
                                         .cacheDisabled(true)
                                         .build()))
                                 .containerPort(8080)
-                                .environment(new HashMap<>(Map.of(
-                                        "SPRING_PROFILES_ACTIVE", "prod",
-                                        "AWS_REGION", props.getEnv().getRegion(),
-                                        "EXTRACTOR_TYPE", "bedrock",
-                                        "BEDROCK_REGION", "us-east-1",
-                                        "APP_PASSWORD", java.util.Objects.requireNonNull(
+                                .environment(new HashMap<>(Map.ofEntries(
+                                        Map.entry("SPRING_PROFILES_ACTIVE", "prod"),
+                                        Map.entry("AWS_REGION", props.getEnv().getRegion()),
+                                        Map.entry("EXTRACTOR_TYPE", "bedrock"),
+                                        Map.entry("BEDROCK_REGION", "us-east-1"),
+                                        Map.entry("APP_PASSWORD", java.util.Objects.requireNonNull(
                                                 System.getenv("LONDONSEARCH_PASSWORD"),
-                                                "LONDONSEARCH_PASSWORD env var must be set for deployment"),
-                                        "PROPERTIES_TABLE", propertiesTable.getTableName(),
-                                        "LISTINGS_TABLE", listingsTable.getTableName(),
-                                        "SEARCH_CONFIGS_TABLE", searchConfigsTable.getTableName(),
-                                        "MONITORED_SITES_TABLE", monitoredSitesTable.getTableName(),
-                                        "ALERTS_TABLE", alertsTable.getTableName()
+                                                "LONDONSEARCH_PASSWORD env var must be set for deployment")),
+                                        Map.entry("ANTHROPIC_API_KEY", java.util.Objects.requireNonNull(
+                                                System.getenv("ANTHROPIC_API_KEY"),
+                                                "ANTHROPIC_API_KEY env var must be set for deployment")),
+                                        Map.entry("PROPERTIES_TABLE", propertiesTable.getTableName()),
+                                        Map.entry("LISTINGS_TABLE", listingsTable.getTableName()),
+                                        Map.entry("SEARCH_CONFIGS_TABLE", searchConfigsTable.getTableName()),
+                                        Map.entry("MONITORED_SITES_TABLE", monitoredSitesTable.getTableName()),
+                                        Map.entry("ALERTS_TABLE", alertsTable.getTableName())
                                 )))
                                 .build())
                         .publicLoadBalancer(true)
@@ -84,8 +87,8 @@ public class PortalStack extends Stack {
         alertsTable.grantReadWriteData(service.getTaskDefinition().getTaskRole());
         imagesBucket.grantReadWrite(service.getTaskDefinition().getTaskRole());
 
-        // Grant Bedrock access for Nova Micro (extraction) and Claude Sonnet (AI assessment)
-        // Wildcard region because Bedrock may route cross-region (e.g. Sonnet → us-east-2)
+        // Grant Bedrock access for Nova Micro (extraction only — Claude uses Anthropic API directly)
+        // Wildcard region because Bedrock may route cross-region
         service.getTaskDefinition().getTaskRole().addToPrincipalPolicy(PolicyStatement.Builder.create()
                 .actions(List.of("bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"))
                 .resources(List.of(

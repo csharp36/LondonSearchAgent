@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.jsoup)
     implementation(libs.playwright)
     implementation(libs.aws.bedrockruntime)
+    implementation(libs.anthropic.java)
     implementation(libs.aws.ses)
 
     developmentOnly("org.springframework.boot:spring-boot-devtools")

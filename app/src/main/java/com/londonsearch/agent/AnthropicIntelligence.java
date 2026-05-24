@@ -1,5 +1,8 @@
 package com.londonsearch.agent;
 
+import com.anthropic.client.AnthropicClient;
+import com.anthropic.models.messages.Message;
+import com.anthropic.models.messages.MessageCreateParams;
 import com.londonsearch.model.Property;
 import com.londonsearch.model.SearchConfig;
 import org.slf4j.Logger;
@@ -7,14 +10,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
-import software.amazon.awssdk.services.bedrockruntime.model.*;
 
 @Service
 @ConditionalOnProperty(name = "app.agent.extractor", havingValue = "bedrock")
-public class BedrockIntelligence implements PropertyIntelligence {
+public class AnthropicIntelligence implements PropertyIntelligence {
 
-    private static final Logger log = LoggerFactory.getLogger(BedrockIntelligence.class);
+    private static final Logger log = LoggerFactory.getLogger(AnthropicIntelligence.class);
 
     private static final String ASSESSMENT_PROMPT = """
             You are a London property analyst helping a discerning buyer assess rental properties.
@@ -38,14 +39,14 @@ public class BedrockIntelligence implements PropertyIntelligence {
             SCORE: <integer 0-100 reflecting how well this property meets the criteria>
             """;
 
-    private final BedrockRuntimeClient bedrockClient;
-    private final String intelligenceModelId;
+    private final AnthropicClient anthropicClient;
+    private final String modelId;
 
-    public BedrockIntelligence(
-            BedrockRuntimeClient bedrockClient,
-            @Value("${app.agent.bedrock.intelligence-model-id:anthropic.claude-sonnet-4-20250514}") String intelligenceModelId) {
-        this.bedrockClient = bedrockClient;
-        this.intelligenceModelId = intelligenceModelId;
+    public AnthropicIntelligence(
+            AnthropicClient anthropicClient,
+            @Value("${app.agent.anthropic.model-id:claude-sonnet-4-20250514}") String modelId) {
+        this.anthropicClient = anthropicClient;
+        this.modelId = modelId;
     }
 
     @Override
@@ -72,28 +73,28 @@ public class BedrockIntelligence implements PropertyIntelligence {
         );
 
         try {
-            ConverseResponse response = bedrockClient.converse(ConverseRequest.builder()
-                    .modelId(intelligenceModelId)
-                    .messages(Message.builder()
-                            .role(ConversationRole.USER)
-                            .content(ContentBlock.fromText(prompt))
-                            .build())
-                    .inferenceConfig(InferenceConfiguration.builder()
-                            .maxTokens(512)
-                            .temperature(0.3f)
-                            .build())
+            Message message = anthropicClient.messages().create(MessageCreateParams.builder()
+                    .model(modelId)
+                    .maxTokens(512L)
+                    .temperature(0.3)
+                    .addUserMessage(prompt)
                     .build());
 
-            String responseText = response.output().message().content().get(0).text();
+            String responseText = message.content().stream()
+                    .flatMap(block -> block.text().stream())
+                    .map(textBlock -> textBlock.text())
+                    .findFirst()
+                    .orElse("");
+
             return parseAssessment(responseText, area);
 
         } catch (Exception e) {
-            log.error("BedrockIntelligence: assessment failed for property in {}: {}", area, e.getMessage());
+            log.error("AnthropicIntelligence: assessment failed for property in {}: {}", area, e.getMessage());
             return new Assessment("AI assessment unavailable.", 50);
         }
     }
 
-    private Assessment parseAssessment(String responseText, String area) {
+    Assessment parseAssessment(String responseText, String area) {
         String summary = "AI assessment unavailable.";
         int score = 50;
 
@@ -109,10 +110,10 @@ public class BedrockIntelligence implements PropertyIntelligence {
                 }
             }
         } catch (Exception e) {
-            log.warn("BedrockIntelligence: failed to parse assessment response for area {}: {}", area, e.getMessage());
+            log.warn("AnthropicIntelligence: failed to parse assessment response for area {}: {}", area, e.getMessage());
         }
 
-        log.info("BedrockIntelligence: assessed property in {} — score {}", area, score);
+        log.info("AnthropicIntelligence: assessed property in {} — score {}", area, score);
         return new Assessment(summary, score);
     }
 }

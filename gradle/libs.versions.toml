@@ -7,6 +7,7 @@ constructs = "10.4.2"
 htmx-spring = "4.0.1"
 jsoup = "1.18.1"
 playwright = "1.52.0"
+anthropic-sdk = "2.34.0"
 
 [libraries]
 aws-dynamodb-enhanced = { module = "software.amazon.awssdk:dynamodb-enhanced" }
@@ -20,6 +21,7 @@ htmx-spring-boot = { module = "io.github.wimdeblauwe:htmx-spring-boot-thymeleaf"
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
 aws-bedrockruntime = { module = "software.amazon.awssdk:bedrockruntime" }
+anthropic-java = { module = "com.anthropic:anthropic-java", version.ref = "anthropic-sdk" }
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
