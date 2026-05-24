@@ -13,7 +13,10 @@ import java.util.regex.Pattern;
 @Service
 public class PropertyNormalizer {
 
-    private static final Pattern PRICE_PATTERN = Pattern.compile("[£$]?([\\d,]+)");
+    private static final Pattern PRICE_PATTERN = Pattern.compile("[£$]?([\\d,.]+)");
+
+    /** No London rental exceeds £200,000/month — anything above is an extraction error. */
+    private static final int MAX_MONTHLY_RENT = 200_000;
 
     /** Patterns that indicate a hallucinated or placeholder address from AI extraction. */
     private static final List<Pattern> FAKE_ADDRESS_PATTERNS = List.of(
@@ -50,13 +53,30 @@ public class PropertyNormalizer {
         Matcher matcher = PRICE_PATTERN.matcher(priceStr);
         if (!matcher.find()) return null;
         try {
-            int amount = Integer.parseInt(matcher.group(1).replace(",", ""));
+            String raw = matcher.group(1);
+            // Strip periods used as thousand separators (European format like 5.200)
+            // but preserve a final decimal portion (e.g. 5,200.12 → keep as 5200)
+            // If the string has both commas and periods, the last separator before
+            // fewer than 3 trailing digits is a decimal point — strip it and after.
+            String cleaned = raw;
+            int lastDot = cleaned.lastIndexOf('.');
+            int lastComma = cleaned.lastIndexOf(',');
+            if (lastDot > lastComma && cleaned.length() - lastDot <= 3) {
+                // Period is a decimal separator (e.g. "5,200.12") — truncate decimals
+                cleaned = cleaned.substring(0, lastDot);
+            }
+            // Remove all remaining commas and periods (thousand separators)
+            cleaned = cleaned.replace(",", "").replace(".", "");
+
+            int amount = Integer.parseInt(cleaned);
             String lower = priceStr.toLowerCase();
             if (lower.contains("pw") || lower.contains("per week") || lower.contains("p/w")) {
-                return (int) Math.round(amount * 52.0 / 12.0);
+                amount = (int) Math.round(amount * 52.0 / 12.0);
             } else if (lower.contains("pa") || lower.contains("per annum") || lower.contains("p/a")) {
-                return amount / 12;
+                amount = amount / 12;
             }
+            // Reject nonsensical prices — LLM extraction errors
+            if (amount > MAX_MONTHLY_RENT) return null;
             return amount;
         } catch (NumberFormatException e) {
             return null;

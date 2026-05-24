@@ -312,6 +312,14 @@ public class AgentPipelineService {
 
             Optional<DeduplicationService.DedupMatch> match = deduplicationService.findMatch(normalizedAddr);
 
+            // Reject matches where prices diverge significantly (different units on same street)
+            if (match.isPresent() && !pricesCompatible(pricePerMonth, match.get().property().getPricePerMonth())) {
+                log.info("Rejecting dedup match — price mismatch: {} (£{}/mo) ↔ {} (£{}/mo)",
+                        normalizedAddr, pricePerMonth,
+                        match.get().property().getNormalizedAddress(), match.get().property().getPricePerMonth());
+                match = Optional.empty();
+            }
+
             if (match.isPresent()) {
                 Property prop = match.get().property();
                 double confidence = match.get().confidence();
@@ -332,6 +340,16 @@ public class AgentPipelineService {
         }
 
         return new PipelineResult(newCount, updatedCount, newPropertyIds);
+    }
+
+    /**
+     * Two prices are compatible if neither is null and they are within 40% of each other.
+     * This prevents merging different properties on the same street (e.g. £8,558/mo vs £65,000/mo).
+     */
+    private boolean pricesCompatible(Integer price1, Integer price2) {
+        if (price1 == null || price2 == null) return true; // can't compare, allow match
+        double ratio = (double) Math.max(price1, price2) / Math.min(price1, price2);
+        return ratio <= 1.4;
     }
 
     private Property createProperty(ExtractedProperty ep, String normalizedAddr) {
